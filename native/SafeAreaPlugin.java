@@ -49,4 +49,25 @@ public class SafeAreaPlugin extends Plugin {
             }
         });
     }
+
+    /** Cor de fundo da WebView igual à do app (claro/escuro), para que qualquer
+     *  área nova que apareça ao redimensionar não pisque com outra cor. */
+    @PluginMethod
+    public void setBackground(final PluginCall call) {
+        final String c = call.getString("color");
+        if (c == null || getActivity() == null) {
+            call.resolve();
+            return;
+        }
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    getBridge().getWebView().setBackgroundColor(android.graphics.Color.parseColor(c));
+                } catch (Exception ignored) {
+                }
+                call.resolve();
+            }
+        });
+    }
 }

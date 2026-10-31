@@ -147,5 +147,9 @@ if ! grep -q "USE_BIOMETRIC" "$MANIFEST"; then
   sed -i '0,/<application/s//<uses-permission android:name="android.permission.USE_BIOMETRIC" \/>\n    <application/' "$MANIFEST"
 fi
 grep -q "USE_BIOMETRIC" "$MANIFEST" || { echo "Não foi possível adicionar a permissão"; exit 1; }
+if ! grep -q "android.permission.CAMERA" "$MANIFEST"; then
+  sed -i '0,/<application/s//<uses-permission android:name="android.permission.CAMERA" \/>\n    <uses-feature android:name="android.hardware.camera" android:required="false" \/>\n    <application/' "$MANIFEST"
+fi
+grep -q "android.permission.CAMERA" "$MANIFEST" || { echo "Não foi possível adicionar a permissão da câmera"; exit 1; }
 
 echo "Personalizações nativas aplicadas."
