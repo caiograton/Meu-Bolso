@@ -865,11 +865,13 @@ async function exDeliver(files){var msg=Q("exmsg");msg.textContent="";
  try{
   if(exNative()){var uris=[];for(var i=0;i<files.length;i++){var w=await Capacitor.Plugins.Filesystem.writeFile({path:files[i].name,data:await exB64(files[i].blob),directory:"CACHE"});uris.push(w.uri)}
    await Capacitor.Plugins.Share.share({title:"Extrato Meu Bolso",dialogTitle:"Salvar ou enviar o extrato",files:uris});return}
+  var dl=null;try{dl=window.claude&&claude.use?await claude.use("downloads"):null}catch(e){dl=null}
+  if(dl){for(var j=0;j<files.length;j++)await dl.save({filename:files[j].name,data:files[j].blob});return}
   var fl=files.map(function(f){return new File([f.blob],f.name,{type:f.blob.type})});
   if(navigator.canShare&&navigator.canShare({files:fl})&&/Android|iPhone|iPad/i.test(navigator.userAgent)){await navigator.share({files:fl,title:"Extrato Meu Bolso"});return}
   files.forEach(function(f){var a=document.createElement("a");a.href=URL.createObjectURL(f.blob);a.download=f.name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},4000)});
   msg.textContent="Se o download não iniciar neste ambiente, use o aplicativo instalado ou abra o app direto no navegador."
- }catch(e){if(e&&/cancel|abort|dismiss/i.test(String(e.message||e.name||e)))return;msg.textContent="Não foi possível salvar o arquivo agora."}}
+ }catch(e){if(e&&(e.code==="declined"||/cancel|abort|dismiss/i.test(String(e.message||e.name||e))))return;msg.textContent="Não foi possível salvar o arquivo agora."}}
 Q("exgo").onclick=async function(){if(EX.busy)return;var mo=exModel();if(!mo)return;EX.busy=true;Q("exgo").disabled=true;Q("exmsg").textContent="";var lb=Q("exgo").textContent;Q("exgo").textContent="Gerando…";
  try{try{if(document.fonts&&document.fonts.load)await Promise.all([document.fonts.load("800 30px 'Bricolage Grotesque'"),document.fonts.load("600 30px 'Bricolage Grotesque'"),document.fonts.load("500 30px 'Bricolage Grotesque'")])}catch(e){}
   EX.model=mo;EX.pages=xBuild(mo);var th=Q("exth");th.innerHTML="";EX.pages.forEach(function(cv,i){var t=document.createElement("canvas");t.width=360;t.height=Math.round(360*XH/XW);t.getContext("2d").drawImage(cv,0,0,t.width,t.height);var im=new Image();im.src=t.toDataURL("image/jpeg",.8);im.alt="Página "+(i+1);th.appendChild(im)});
