@@ -16,7 +16,7 @@
 html,body{height:100%}
 body{font-family:'Bricolage Grotesque',system-ui,sans-serif;background:var(--ink);color:var(--text);display:flex;justify-content:center}
 #app{width:100%;max-width:430px;height:100%;background:var(--bg);display:flex;flex-direction:column;position:relative;overflow:hidden}
-:root{--st:max(env(safe-area-inset-top,0px),var(--nst,0px));--sb:max(env(safe-area-inset-bottom,0px),var(--nsb,0px))}
+:root{--xpad:14px;--st:calc(max(env(safe-area-inset-top,0px),var(--nst,0px)) + var(--xpad));--sb:calc(max(env(safe-area-inset-bottom,0px),var(--nsb,0px)) + var(--xpad))}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
 header{background:linear-gradient(var(--navy),var(--navy)) top/100% calc(100% - 33px) no-repeat;color:var(--cream);padding:calc(10px + var(--st)) 20px 0;position:relative;z-index:2;pointer-events:none}header button,header input{pointer-events:auto}
