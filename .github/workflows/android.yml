@@ -36,7 +36,7 @@ jobs:
       - name: Testar as contas de margens e teclado
         run: |
           mkdir -p /tmp/imt
-          javac -d /tmp/imt native/InsetMath.java native/InsetMathTest.java
+          javac -d /tmp/imt native/InsetMath.java native/ImeTracker.java native/InsetMathTest.java
           java -cp /tmp/imt com.caiograton.meubolso.InsetMathTest
 
       - name: Criar projeto Android

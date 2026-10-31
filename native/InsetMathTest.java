@@ -62,6 +62,23 @@ public class InsetMathTest {
             if (InsetMath.bottomPad(H, H - ime, 63, ime) != 0 && ime >= 63) none = false;
         }
         eq("janela encolhida: sem margem extra", none ? 1 : 0, 1);
+        // ImeTracker: o app não pode saltar para a altura final antes do teclado
+        ImeTracker t = new ImeTracker();
+        eq("tracker sem animacao", t.effective(0), 0);
+        t.onPrepare();                                   // vai abrir; sistema já diz 900
+        eq("abrindo: 1o instante segura o valor antigo", t.effective(900), 0);
+        t.onProgress(300); eq("abrindo: quadro 300", t.effective(900), 300);
+        t.onProgress(620); eq("abrindo: quadro 620", t.effective(900), 620);
+        t.onProgress(900); eq("abrindo: quadro final", t.effective(900), 900);
+        t.onEnd();         eq("abriu: segue o sistema", t.effective(900), 900);
+        t.onPrepare();                                   // vai fechar; sistema já diz 0
+        eq("fechando: 1o instante segura 900", t.effective(0), 900);
+        t.onProgress(450); eq("fechando: quadro 450", t.effective(0), 450);
+        t.onProgress(0);   eq("fechando: quadro 0", t.effective(0), 0);
+        t.onEnd();         eq("fechou: segue o sistema", t.effective(0), 0);
+        t.onPrepare(); t.onProgress(-5);
+        eq("valor negativo vira 0", t.effective(0), 0);
+        t.onEnd();
         if (fails > 0) { System.out.println(fails + " teste(s) falharam"); System.exit(1); }
         System.out.println("Todos os testes passaram.");
     }

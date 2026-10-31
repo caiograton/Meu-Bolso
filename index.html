@@ -763,8 +763,17 @@ function qzNudge(){if(PS.done||PS.never||QZ.shown)return;QZ.shown=true;setTimeou
 Q("qzhi").onclick=function(e){var t=e.target.closest("[data-qh]");if(!t){if(e.target.id==="qzhi")Q("qzhi").classList.remove("open");return}
  Q("qzhi").classList.remove("open");if(t.dataset.qh==="go")qzOpen();else if(t.dataset.qh==="never"){PS.never=true;psSave()}};
 
-function nmClose(){Q("nmhi").classList.remove("open")}
-Q("nmhi").onclick=function(e){var t=e.target.closest("[data-nm]");if(!t)return;if(t.dataset.nm==="ok"){var v=Q("nmin").value.trim();if(!v){Q("nmin").focus();return}nome=v;Q("ni").value=v;try{localStorage.setItem("nome",v)}catch(x){}setNome();saveSoon()}else{try{localStorage.setItem("nome","")}catch(x){}}NOME_NEW=false;nmClose()};
+var NMH=Q("nmhi").querySelector(".dlg").innerHTML;
+function nmSplit(v){var t=String(v).trim().split(/\s+/).filter(Boolean);return{n:t[0]||"",s:t.slice(1).join(" ")}}
+function nmWelcome(sp){var d=Q("nmhi").querySelector(".dlg");d.innerHTML='<h3>Bem-vindo ao Meu Bolso, '+esc(sp.n)+'!</h3><p class="cfmq">Que bom ter você por aqui. Registre suas entradas e saídas, acompanhe o orçamento e as metas e gere extratos quando precisar.</p>'+(sp.s?'<p class="cfmq">Separei o seu nome: <b>Nome</b> '+esc(sp.n)+' · <b>Sobrenome</b> '+esc(sp.s)+'. Se quiser ajustar, é só ir em Configurações › Perfil.</p>':'')+'<div class="qzbtns"><button type="button" class="save gbtn" data-nm="done">Começar</button></div>'}
+function nmClose(){Q("nmhi").classList.remove("open");setTimeout(function(){Q("nmhi").querySelector(".dlg").innerHTML=NMH},250)}
+Q("nmhi").onclick=function(e){var t=e.target.closest("[data-nm]");if(!t)return;var k=t.dataset.nm;
+ if(k==="ok"){var v=Q("nmin").value.trim();if(!v){Q("nmin").focus();return}var sp=nmSplit(v);nome=sp.n;Q("ni").value=nome;try{localStorage.setItem("nome",nome)}catch(x){}
+  if(sp.s&&!PF.sobrenome){PF.sobrenome=sp.s;Q("ps").value=sp.s;pfSave()}
+  setNome();saveSoon();NOME_NEW=false;nmWelcome(sp);return}
+ if(k==="skip"){try{localStorage.setItem("nome","")}catch(x){}}
+ NOME_NEW=false;nmClose()};
+Q("ni").onchange=function(){var sp=nmSplit(this.value);if(sp.s&&!PF.sobrenome){nome=sp.n;this.value=nome;PF.sobrenome=sp.s;Q("ps").value=sp.s;pfSave();try{localStorage.setItem("nome",nome)}catch(e){}setNome();saveSoon()}};
 Q("nmin").onkeydown=function(e){if(e.key==="Enter"){e.preventDefault();Q("nmhi").querySelector('[data-nm="ok"]').click()}};
 setTimeout(function(){if(NOME_NEW&&!nome&&!Q("lock").classList.contains("on")){Q("nmhi").classList.add("open");setTimeout(function(){Q("nmin").focus()},120)}},1800);
 

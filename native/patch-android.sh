@@ -8,6 +8,7 @@ test -d "$PKG_DIR" || { echo "Pasta $PKG_DIR não encontrada"; exit 1; }
 cp native/DeviceLockPlugin.java "$PKG_DIR/DeviceLockPlugin.java"
 cp native/SafeAreaPlugin.java "$PKG_DIR/SafeAreaPlugin.java"
 cp native/InsetMath.java "$PKG_DIR/InsetMath.java"
+cp native/ImeTracker.java "$PKG_DIR/ImeTracker.java"
 
 cat > "$PKG_DIR/MainActivity.java" <<'JAVA'
 package com.caiograton.meubolso;
@@ -35,8 +36,7 @@ public class MainActivity extends BridgeActivity {
     private View top;
     private View bottom;
     private View content;
-    // altura do teclado durante a animação (-1 = sem animação em andamento)
-    private int animIme = -1;
+    private final ImeTracker imeTracker = new ImeTracker();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -78,15 +78,20 @@ public class MainActivity extends BridgeActivity {
         ViewCompat.setWindowInsetsAnimationCallback(content,
                 new WindowInsetsAnimationCompat.Callback(WindowInsetsAnimationCompat.Callback.DISPATCH_MODE_CONTINUE_ON_SUBTREE) {
             @Override
+            public void onPrepare(WindowInsetsAnimationCompat animation) {
+                imeTracker.onPrepare();
+            }
+
+            @Override
             public WindowInsetsCompat onProgress(WindowInsetsCompat insets, List<WindowInsetsAnimationCompat> running) {
-                animIme = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
+                imeTracker.onProgress(insets.getInsets(WindowInsetsCompat.Type.ime()).bottom);
                 applyInsets();
                 return insets;
             }
 
             @Override
             public void onEnd(WindowInsetsAnimationCompat animation) {
-                animIme = -1;
+                imeTracker.onEnd();
                 applyInsets();
             }
         });
@@ -115,8 +120,9 @@ public class MainActivity extends BridgeActivity {
         WindowInsetsCompat w = ViewCompat.getRootWindowInsets(content);
         if (w == null) return;
         Insets sys = w.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
-        boolean imeVisible = animIme >= 0 ? animIme > 0 : w.isVisible(WindowInsetsCompat.Type.ime());
-        int imeBottom = animIme >= 0 ? animIme : (imeVisible ? w.getInsets(WindowInsetsCompat.Type.ime()).bottom : 0);
+        int systemIme = w.isVisible(WindowInsetsCompat.Type.ime()) ? w.getInsets(WindowInsetsCompat.Type.ime()).bottom : 0;
+        int imeBottom = imeTracker.effective(systemIme);
+        boolean imeVisible = imeBottom > 0;
         int[] loc = new int[2];
         content.getLocationOnScreen(loc);
         int bp = InsetMath.bottomPad(screenHeight(), loc[1] + content.getHeight(), sys.bottom, imeBottom);
