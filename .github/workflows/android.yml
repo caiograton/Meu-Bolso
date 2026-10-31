@@ -36,6 +36,9 @@ jobs:
       - name: Gerar ícones e tela de abertura
         run: npm run icons
 
+      - name: Aplicar bloqueio pelo aparelho (nativo)
+        run: bash native/patch-android.sh
+
       - name: Sincronizar
         run: npx cap sync android
 
