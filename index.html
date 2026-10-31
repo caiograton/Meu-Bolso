@@ -791,7 +791,8 @@ Q("qzsh").addEventListener("click",function(e){var t=e.target.closest("[data-qa]
  if(d.qapply){var r=QZ.res;if(!r)return;PS=Object.assign(PS,{done:true,name:r.name,desc:r.desc,msg:r.msg,fin:r.fin,age:QZ.age,cont:QZ.cont,ans:QZ.ans.slice()});psSave();BCATS.forEach(function(c){BG.pct[c]=r.fin[c]});BG.d={};BG.view="orc";BG.msg="Distribuição do seu perfil aplicada.";bSave();qzClose();render();Q("main").scrollTop=0}});
 function qzCard(){if(PS.done){var m=PS.msg;try{if(PS.ans&&PS.ans.length===7)m=qzCalc(PS.ans,PS.age,PS.cont).msg}catch(e){}return'<div class="box"><div class="pfk">Seu perfil de poupador</div><div class="pfn">'+esc(TT(PS.name))+'</div><div class="info">'+esc(m)+'</div><button type="button" class="cancel" data-qz="1">Refazer o quiz</button></div>'}
  return'<div class="box"><div class="bh">Descubra seu perfil de poupador</div><div class="info">Responda 7 perguntas rápidas e receba uma sugestão de distribuição para o seu orçamento.</div><button type="button" class="save gbtn" data-qz="1">Descobrir meu perfil</button></div>'}
-function qzNudge(){if(PS.done||PS.never||QZ.shown)return;QZ.shown=true;setTimeout(function(){if(tab==="metas")Q("qzhi").classList.add("open")},350)}
+function tourOn(){var o=Q("tour");return!!(o&&o.classList.contains("on"))}
+function qzNudge(){if(PS.done||PS.never||QZ.shown||tourOn())return;QZ.shown=true;setTimeout(function(){if(tab==="metas"&&!tourOn())Q("qzhi").classList.add("open")},350)}
 Q("qzhi").onclick=function(e){var t=e.target.closest("[data-qh]");if(!t){if(e.target.id==="qzhi")Q("qzhi").classList.remove("open");return}
  Q("qzhi").classList.remove("open");if(t.dataset.qh==="go")qzOpen();else if(t.dataset.qh==="never"){PS.never=true;psSave()}};
 
@@ -822,7 +823,7 @@ function tabGo(n){return function(){closeSheet();Q("cbg").classList.remove("open
 function inSheet(sel,fn){return function(){var e=document.querySelector(sel);return e&&fn?fn(e):e}}
 function tourStart(part,sp){TP=part;TI=0;var A=[{s:'nav [data-t="resumo"]',x:1}];
  if(part===1){TS=[].concat(sp&&sp.s?[{s:"#cfg",k:"cfgs",pre:tourReset,w:60}]:[],[{s:"#cfg",k:"cfg",pre:tourReset,w:350},{s:"#olho",k:"olho"},{s:'nav [data-t="resumo"]',k:"resumo"},{s:'nav [data-t="lanc"]',k:"lanc"},{s:'nav [data-t="fixos"]',k:"fixos"},{s:'nav [data-t="metas"]',k:"metas"},{s:"#fab",k:"fab"},{k:"fin1",fin:1}])}
- else TS=[{s:"[data-ex]",k:"ex",pre:tabGo("lanc"),w:450},{s:".mbar",k:"mo"},{s:"#fab",k:"fab2"},
+ else TS=[{s:"[data-ex]",k:"ex",pre:tabGo("lanc"),w:450},{s:".mbar",k:"mo"},{s:"#fab",k:"fab2",pre:tabGo("resumo"),w:450},
   {s:"#tS",k:"ty",pre:function(){openSheetNew()},w:600,f:function(){return Q("tS").parentNode}},
   {k:"va",f:function(){return document.querySelector("#bg .vrow")}},{k:"dt",f:function(){return document.querySelector("#bg .datewrap")}},
   {s:"#bfc",k:"ca"},{s:"#bfs",k:"su"},{s:"#fn",k:"ob"},{k:"rp",f:function(){return Q("ff").parentNode}},{s:"#save",k:"sv"},
