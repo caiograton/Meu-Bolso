@@ -342,7 +342,6 @@ function item(i,del){
  return'<div class="item" data-edit="'+i.id+'"><div class="dia"><b>'+i.date.getDate()+'</b><span>'+wd+'</span></div><div class="desc"><b>'+i.desc+(i.fixo?'<span class="fx">fixo</span>':'')+'</b><small>'+(i.t==="e"?(i.sub||"Entrada"):(i.cat||"Sem categoria")+(i.sub?' › '+i.sub:''))+'</small>'+(i.src?'<small class="cxsrc">de '+esc(i.src.n)+' · '+esc(i.src.c)+'</small>':'')+'</div><div class="val '+(i.t==="e"?"in":"out")+'">'+(i.t==="e"?"+":"−")+eur.format(i.val)+(i.cc&&i.cc!==moeda?'<small class="oc">'+fmtC(i.ov,i.cc)+'</small>':'')+'</div>'+(del&&!i.fixo?'<button class="del" data-del="'+i.id+'" aria-label="Excluir">×</button>':'')+'</div>';
 }
 function render(){
- if(tab!=="lanc"&&typeof EX!=="undefined"&&EX)EX.done=false;
  var l=lanc(cur.y,cur.m),t=tot(l),h="";header(t);
  document.querySelectorAll("nav button").forEach(function(b){b.setAttribute("aria-selected",b.dataset.t===tab)});
  if(tab==="resumo"){
@@ -350,7 +349,7 @@ function render(){
   '<h2>Receita × despesa</h2><div class="box">'+chart(l)+'</div>'+
   '<h2>Para onde foi o dinheiro</h2><div class="box">'+donut(l)+'</div>'+'<h2>Seu orçamento</h2><div class="box">'+budgetSummary()+'</div>';
  }else if(tab==="metas"){h=metasHtml()}else if(tab==="lanc"){
-  h='<button type="button" class="exlnk" data-ex="1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg><span class="exlt">'+(typeof EX!=="undefined"&&EX&&EX.done?"Gerar novo extrato":"Gerar extrato")+'</span></button>'+(l.length?'<div>'+l.map(function(i){return item(i,1)}).join("")+'</div>':'<div class="empty">Nenhum lançamento neste mês.</div>');
+  h='<button type="button" class="exlnk" data-ex="1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>Gerar extrato</button>'+(l.length?'<div>'+l.map(function(i){return item(i,1)}).join("")+'</div>':'<div class="empty">Nenhum lançamento neste mês.</div>');
  }else{
   h='<h2 style="margin-top:4px">Lançamentos fixos</h2><div>'+rules.map(function(r){
    return'<div class="item" data-edit="r'+r.id+'"><div class="dia"><b>'+r.day+'</b><span>todo dia</span></div><div class="desc"><b>'+r.desc+'</b><small>'+(r.t==="e"?(r.sub||"Entrada"):(r.cat||"Sem categoria")+(r.sub?' › '+r.sub:''))+'</small></div><div class="val '+(r.t==="e"?"in":"out")+'">'+(r.t==="e"?"+":"−")+(r.cc&&r.cc!==moeda?fmtC(r.val,r.cc):eur.format(r.val))+'</div><button class="del" data-rule="'+r.id+'" aria-label="Excluir">×</button></div>'}).join("")+'</div>'+
@@ -789,7 +788,7 @@ function exNoClr(){document.querySelectorAll("#exch button").forEach(function(b)
 function exChip(k){var t=exToday(),f=exFirst()||t,y=t.getFullYear(),m=t.getMonth();
  if(k==="all")exSetRange(f,t);else if(k==="m")exSetRange(new Date(y,m,1),t);else if(k==="3")exSetRange(new Date(y,m-2,1),t);
  Q("excust").hidden=k!=="c";document.querySelectorAll("#exch button").forEach(function(b){b.className=b.dataset.ep===k?"on":""});exUpd()}
-function exClose(){Q("exw").classList.remove("open");Q("exprev").hidden=true;EX.pages=null}
+function exClose(){Q("exw").classList.remove("open");Q("exprev").hidden=true;EX.pages=null;EX.done=false;Q("exgo").textContent="Gerar extrato"}
 function exOpen(){Q("exprev").hidden=true;Q("exgo").textContent=EX.done?"Gerar novo extrato":"Gerar extrato";EX.t="all";document.querySelectorAll("#ext button").forEach(function(b){b.className=b.dataset.et==="all"?"on":""});exChip("all");Q("exw").classList.add("open")}
 Q("exw").onclick=function(e){if(e.target.id==="exw"){exClose();return}
  var b=e.target.closest("[data-et],[data-ep]");if(!b)return;
@@ -853,14 +852,13 @@ function xBuild(mo){var pages=[],cp=null,y=0,nome1=(typeof nome==="string"&&nome
   xLogo(c,XP,XH-XF+26,40);c.fillStyle=XM;c.font=xFont(600,20);c.textBaseline="middle";c.textAlign="left";c.fillText("Meu Bolso  ·  extrato gerado em "+exFmt(new Date()),XP+54,XH-XF+46);
   c.textAlign="right";c.fillText("Página "+(i+1)+" de "+n,XW-XP,XH-XF+46);cs.push(cv)});
  return cs}
-function xHeadBig(c,full,mo){var g=c.createLinearGradient(0,0,XW,260);g.addColorStop(0,"#8A2433");g.addColorStop(1,"#5A141F");c.fillStyle=g;c.fillRect(0,0,XW,210);
- c.save();c.translate(0,180);c.scale(XW/400,100/34);c.fillStyle=g;c.fill(new Path2D("M0 0 L400 0 L400 6 C300 32 240 34 170 18 C110 4 60 2 0 20Z"));c.restore();
- c.save();c.translate(0,180);c.scale(XW/400,100/34);c.strokeStyle="#8FC4A1";c.lineWidth=3.2;c.lineCap="round";c.stroke(new Path2D("M0 20 C60 2 110 4 170 18 C240 34 300 32 400 6"));c.restore();
- xLogo(c,XP,52,112);c.fillStyle="#F5F3EF";c.textBaseline="alphabetic";c.textAlign="left";c.font=xFont(800,50);c.fillText("Meu Bolso",XP+138,100);c.font=xFont(500,27);c.globalAlpha=.85;c.fillText("Extrato de lançamentos",XP+138,142);c.globalAlpha=1;
- c.textAlign="right";c.font=xFont(600,22);c.globalAlpha=.85;c.fillText("Gerado em "+exFmt(new Date()),XW-XP,100);c.globalAlpha=1}
-function xHeadSlim(c,mo){var g=c.createLinearGradient(0,0,XW,0);g.addColorStop(0,"#8A2433");g.addColorStop(1,"#5A141F");c.fillStyle=g;c.fillRect(0,0,XW,96);
- xLogo(c,XP,20,56);c.fillStyle="#F5F3EF";c.textBaseline="middle";c.textAlign="left";c.font=xFont(800,30);c.fillText("Meu Bolso",XP+74,48);c.textAlign="right";c.font=xFont(600,21);c.globalAlpha=.85;c.fillText(exFmt(mo.from)+" – "+exFmt(mo.to),XW-XP,48);c.globalAlpha=1;
- c.strokeStyle="#8FC4A1";c.lineWidth=4;c.beginPath();c.moveTo(0,98);c.lineTo(XW,98);c.stroke()}
+function xWave(c,y0,sy){c.fillStyle=XB;c.fillRect(0,0,XW,y0+2);c.save();c.translate(0,y0);c.scale(XW/400,sy);c.fillStyle=XB;c.fill(new Path2D("M0 0 L400 0 L400 6 C300 32 240 34 170 18 C110 4 60 2 0 20Z"));c.restore();
+ c.save();c.translate(0,y0);c.scale(XW/400,sy);c.strokeStyle="#CFC6B8";c.lineWidth=3.5;c.lineCap="round";c.stroke(new Path2D("M0 20 C60 2 110 4 170 18 C240 34 300 32 400 6"));c.restore()}
+function xHeadBig(c,full,mo){xWave(c,190,3);
+ xLogo(c,XP,48,112);c.fillStyle="#F5F3EF";c.textBaseline="alphabetic";c.textAlign="left";c.font=xFont(800,50);c.fillText("Meu Bolso",XP+138,96);c.font=xFont(500,27);c.globalAlpha=.85;c.fillText("Extrato de lançamentos",XP+138,138);c.globalAlpha=1;
+ c.textAlign="right";c.font=xFont(600,22);c.globalAlpha=.85;c.fillText("Gerado em "+exFmt(new Date()),XW-XP,96);c.globalAlpha=1}
+function xHeadSlim(c,mo){xWave(c,86,1.1);
+ xLogo(c,XP,14,56);c.fillStyle="#F5F3EF";c.textBaseline="middle";c.textAlign="left";c.font=xFont(800,30);c.fillText("Meu Bolso",XP+74,42);c.textAlign="right";c.font=xFont(600,21);c.globalAlpha=.85;c.fillText(exFmt(mo.from)+" – "+exFmt(mo.to),XW-XP,42);c.globalAlpha=1}
 
 /* --- saída --- */
 function exBlob(cv,type,q){return new Promise(function(res){cv.toBlob(res,type,q)})}
@@ -890,7 +888,7 @@ async function exDeliver(files,mEl){var msg=mEl||(Q("exv").hidden?Q("exmsg"):Q("
 Q("exgo").onclick=async function(){if(EX.busy)return;var mo=exModel();if(!mo)return;EX.busy=true;Q("exgo").disabled=true;Q("exmsg").textContent="";Q("exprev").hidden=true;var lb=Q("exgo").textContent;Q("exgo").textContent="Gerando…";
  try{try{if(document.fonts&&document.fonts.load)await Promise.all([document.fonts.load("800 30px 'Bricolage Grotesque'"),document.fonts.load("600 30px 'Bricolage Grotesque'"),document.fonts.load("500 30px 'Bricolage Grotesque'")])}catch(e){}
   EX.model=mo;EX.pages=xBuild(mo);
-  Q("exprev").hidden=false;EX.done=true;var lt=document.querySelector(".exlt");if(lt)lt.textContent="Gerar novo extrato";lb="Gerar novo extrato"}
+  Q("exprev").hidden=false;EX.done=true;lb="Gerar novo extrato"}
  catch(e){Q("exmsg").textContent="Não foi possível gerar o extrato."}
  EX.busy=false;Q("exgo").disabled=false;Q("exgo").textContent=lb};
 async function exJpg(){if(!EX.pages)return;var fs=[];for(var i=0;i<EX.pages.length;i++)fs.push({name:exName("jpg",EX.pages.length>1?i:undefined),blob:await exBlob(EX.pages[i],"image/jpeg",.93)});exDeliver(fs)}
@@ -959,7 +957,7 @@ Q("cv5").onclick=function(e){var b=e.target.closest("[data-cxt],[data-cxp],[data
  if(b.dataset.cxt){CX.t=b.dataset.cxt;document.querySelectorAll("#cxt button").forEach(function(x){x.className=x.dataset.cxt===CX.t?"on":""});cxUpd()}
  else if(b.dataset.cxp)cxChip(b.dataset.cxp);else if(b.dataset.cxo)cxOpen(b.dataset.cxo);else if(b.id==="cxgo")cxPrep();else if(b.id==="cxsend")cxSend();else if(b.id==="cxpick")Q("cxfile").click()};
 Q("cxfT").oninput=function(){dtInput(this,"cxf");cxNoClr();cxUpd()};Q("cxuT").oninput=function(){dtInput(this,"cxu");cxNoClr();cxUpd()};
-var CXT=null;Q("cxi").onclick=function(){var t=Q("cxit");t.hidden=!t.hidden;clearTimeout(CXT);if(!t.hidden)CXT=setTimeout(function(){t.hidden=true},3500)};
+var CXT=null;Q("cxi").onclick=function(){var t=Q("cxit");t.hidden=!t.hidden;clearTimeout(CXT);if(!t.hidden)CXT=setTimeout(function(){t.hidden=true},6000)};
 Q("cv5").addEventListener("click",function(e){if(!e.target.closest("#cxi")&&!e.target.closest("#cxit"))Q("cxit").hidden=true});
 Q("cxfile").onchange=function(){var f=this.files&&this.files[0];this.value="";if(!f)return;var r=new FileReader();r.onload=function(){cxLoad(String(r.result||""))};r.onerror=function(){Q("cxmsg").textContent="Não foi possível ler o arquivo."};r.readAsText(f)};
 Q("cxw").onclick=function(e){if(e.target.id==="cxw"){Q("cxw").classList.remove("open");return}var b=e.target.closest("button");if(!b)return;
