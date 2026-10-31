@@ -6,6 +6,7 @@ PKG_DIR="android/app/src/main/java/com/caiograton/meubolso"
 test -d "$PKG_DIR" || { echo "Pasta $PKG_DIR não encontrada"; exit 1; }
 
 cp native/DeviceLockPlugin.java "$PKG_DIR/DeviceLockPlugin.java"
+cp native/SafeAreaPlugin.java "$PKG_DIR/SafeAreaPlugin.java"
 
 cat > "$PKG_DIR/MainActivity.java" <<'JAVA'
 package com.caiograton.meubolso;
@@ -17,6 +18,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(DeviceLockPlugin.class);
+        registerPlugin(SafeAreaPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }
