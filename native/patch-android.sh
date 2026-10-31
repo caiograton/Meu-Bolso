@@ -20,6 +20,9 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(DeviceLockPlugin.class);
         registerPlugin(SafeAreaPlugin.class);
         super.onCreate(savedInstanceState);
+        androidx.core.view.WindowInsetsControllerCompat wc = androidx.core.view.WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        wc.setAppearanceLightStatusBars(false);
+        wc.setAppearanceLightNavigationBars(false);
     }
 }
 JAVA
