@@ -33,6 +33,12 @@ jobs:
       - name: Numerar a versão dentro do app
         run: sed -i "s/__APP_VERSION__/0.1.${{ github.run_number }}/g" www/index.html
 
+      - name: Testar as contas de margens e teclado
+        run: |
+          mkdir -p /tmp/imt
+          javac -d /tmp/imt native/InsetMath.java native/InsetMathTest.java
+          java -cp /tmp/imt com.caiograton.meubolso.InsetMathTest
+
       - name: Criar projeto Android
         run: npx cap add android
 

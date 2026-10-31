@@ -7,15 +7,19 @@ test -d "$PKG_DIR" || { echo "Pasta $PKG_DIR não encontrada"; exit 1; }
 
 cp native/DeviceLockPlugin.java "$PKG_DIR/DeviceLockPlugin.java"
 cp native/SafeAreaPlugin.java "$PKG_DIR/SafeAreaPlugin.java"
+cp native/InsetMath.java "$PKG_DIR/InsetMath.java"
 
 cat > "$PKG_DIR/MainActivity.java" <<'JAVA'
 package com.caiograton.meubolso;
 
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -26,6 +30,9 @@ import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
     private static final int BORDO = 0xFF7B1F2A;
+    private View top;
+    private View bottom;
+    private View content;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -33,43 +40,69 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(SafeAreaPlugin.class);
         super.onCreate(savedInstanceState);
 
-        // Modo "borda a borda" igual em todas as versões do Android: o teclado
-        // passa a ser tratado só por nós (abaixo), sem redimensionar duas vezes.
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-        getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         getWindow().setStatusBarColor(BORDO);
         getWindow().setNavigationBarColor(Color.BLACK);
         WindowInsetsControllerCompat wc = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
         wc.setAppearanceLightStatusBars(false);
         wc.setAppearanceLightNavigationBars(false);
 
-        // O app nunca fica por baixo das barras do Android: o conteúdo é
-        // empurrado para dentro e as faixas das barras são pintadas aqui
-        // (bordô em cima, preto embaixo).
+        // As faixas das barras do Android são pintadas aqui (bordô em cima,
+        // preto embaixo) e o app fica sempre entre elas e acima do teclado.
         final FrameLayout decor = (FrameLayout) getWindow().getDecorView();
-        final View top = new View(this);
+        top = new View(this);
         top.setBackgroundColor(BORDO);
-        final View bottom = new View(this);
+        bottom = new View(this);
         bottom.setBackgroundColor(Color.BLACK);
         decor.addView(top, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, Gravity.TOP));
         decor.addView(bottom, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, Gravity.BOTTOM));
 
-        final View content = findViewById(android.R.id.content);
+        content = findViewById(android.R.id.content);
         ViewCompat.setOnApplyWindowInsetsListener(content, (v, w) -> {
-            Insets sys = w.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
-            int imeBottom = 0;
-            if (android.os.Build.VERSION.SDK_INT >= 30) {
-                imeBottom = w.getInsets(WindowInsetsCompat.Type.ime()).bottom;
-            }
-            v.setPadding(sys.left, sys.top, sys.right, Math.max(sys.bottom, imeBottom));
-            top.getLayoutParams().height = sys.top;
-            top.requestLayout();
-            bottom.getLayoutParams().height = sys.bottom;
-            bottom.requestLayout();
+            v.post(this::applyInsets);
             return WindowInsetsCompat.CONSUMED;
         });
+        // Depois de cada layout: se o sistema já encolheu a janela por causa do
+        // teclado, não somamos o teclado de novo (era o que deixava a tela cinza).
+        content.getViewTreeObserver().addOnGlobalLayoutListener(this::applyInsets);
         ViewCompat.requestApplyInsets(content);
+    }
+
+    private int screenHeight() {
+        if (Build.VERSION.SDK_INT >= 30) {
+            return getWindowManager().getMaximumWindowMetrics().getBounds().height();
+        }
+        DisplayMetrics m = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getRealMetrics(m);
+        return m.heightPixels;
+    }
+
+    private static void setHeight(View v, int h) {
+        ViewGroup.LayoutParams lp = v.getLayoutParams();
+        if (lp.height != h) {
+            lp.height = h;
+            v.setLayoutParams(lp);
+        }
+    }
+
+    private void applyInsets() {
+        if (content == null) return;
+        WindowInsetsCompat w = ViewCompat.getRootWindowInsets(content);
+        if (w == null) return;
+        Insets sys = w.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+        boolean imeVisible = w.isVisible(WindowInsetsCompat.Type.ime());
+        int imeBottom = imeVisible ? w.getInsets(WindowInsetsCompat.Type.ime()).bottom : 0;
+        int[] loc = new int[2];
+        content.getLocationOnScreen(loc);
+        int bp = InsetMath.bottomPad(screenHeight(), loc[1] + content.getHeight(), sys.bottom, imeBottom);
+        int tp = InsetMath.topPad(loc[1], sys.top);
+        if (content.getPaddingLeft() != sys.left || content.getPaddingTop() != tp
+                || content.getPaddingRight() != sys.right || content.getPaddingBottom() != bp) {
+            content.setPadding(sys.left, tp, sys.right, bp);
+        }
+        setHeight(top, sys.top);
+        setHeight(bottom, InsetMath.bottomBarHeight(imeVisible, sys.bottom));
     }
 }
 JAVA
