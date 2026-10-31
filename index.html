@@ -656,13 +656,13 @@ function psSave(){try{localStorage.setItem("poup",JSON.stringify(PS))}catch(e){}
 var TPL={F:{"Custos Fixos":35,"Liberdade Financeira":20,"Conhecimento":15,"Metas":15,"Conforto":10,"Prazeres":5},E:{"Custos Fixos":40,"Liberdade Financeira":15,"Conhecimento":10,"Metas":15,"Conforto":10,"Prazeres":10},C:{"Custos Fixos":45,"Liberdade Financeira":5,"Conhecimento":5,"Metas":10,"Conforto":20,"Prazeres":15}};
 var PRF={F:["Focado","Você prioriza o futuro: abre mão de parte do presente para conquistar liberdade financeira."],E:["Equilibrado","Você busca equilíbrio entre aproveitar o hoje e se preparar para o amanhã."],C:["Conforto","Você valoriza viver bem o presente, com experiências e conforto no dia a dia."]};
 var QZQ=[
-["Escassez","Renda -25% esse mês, o que faz nas 24h?","Modo sobrevivência, corto tudo e protejo aportes.","Enxugo 25% proporcional sem me punir.","Mantenho meu padrão, seguro o investimento esse mês."],
-["Prazer culposo","Show de última hora R$400, 3 semanas seguindo orçamento.","Não vou, jogo na meta maior do ano.","Vou, mas compenso cortando R$400 nas próximas 2 semanas.","Vou sem culpa, experiências não voltam."],
-["Conforto","Sofá quebrou, usaria 70% da reserva de Metas.","Compro o mais barato que dure 12 meses.","Compro custo-benefício intermediário e reponho em 2 meses.","Compro o que sempre quis, meta espera."],
-["Identidade","Cena ideal daqui a 10 anos?","Vendo meu app de investimentos e não preciso trabalhar.","Casa confortável, 2 viagens/ano, trabalhando no que gosto.","Lugar incrível, carro bom, sem olhar preço no dia a dia."],
-["Conhecimento","R$1.200 de restituição, 2 opções:","Curso de 3 meses que aumenta renda em 30%.","Fim de semana em hotel bom + R$600 pra investir.","Fim de semana completo tudo incluso."],
-["Metas","Meta R$15k em 10 meses. No mês 4, celular com 40% off à vista.","Deixo passar, meta é lei, compro depois dos 15k.","Calculo impacto, estendo meta pra 12 meses se couber.","Compro, desconto raro, reajusto meta depois."],
-["Lifestyle creep","Promovido +35% de salário, primeiro pensamento?","Nada muda no padrão, 100% do aumento vai pra futuro.","50% futuro, 30% conforto, 20% prazeres.","Finalmente vou mudar pra ap melhor e trocar de carro."]];
+["Imprevisto","Neste mês, sua renda caiu 25% de forma inesperada. O que você faz nas primeiras 24 horas?","Corto tudo o que não é essencial e protejo meus investimentos.","Reduzo os gastos de forma proporcional, sem me punir.","Mantenho meu padrão de vida e pauso os investimentos neste mês."],
+["Convite","Você está há 3 semanas seguindo o orçamento à risca e surge um show de última hora por R$ 400. O que você faz?","Não vou: prefiro guardar o dinheiro para a minha maior meta do ano.","Vou, mas compenso cortando R$ 400 de outros gastos nas próximas 2 semanas.","Vou sem culpa: experiências não voltam."],
+["Compra necessária","O sofá quebrou e trocá-lo consumiria 70% da sua reserva para Metas. Qual é a sua escolha?","Compro o mais barato que dure uns 12 meses.","Compro um modelo intermediário, com bom custo-benefício, e reponho a reserva em 2 meses.","Compro o sofá que sempre quis: a meta espera."],
+["Meta","Sua meta é juntar R$ 15 mil em 10 meses. No quarto mês, aparece um celular com 40% de desconto à vista. O que você faz?","Deixo passar: a meta vem primeiro, e compro depois de juntar os R$ 15 mil.","Calculo o impacto e, se couber, estendo a meta para 12 meses.","Compro: desconto assim é raro, e depois reajusto a meta."],
+["Dinheiro extra","Você recebeu R$ 1.200 de restituição do imposto de renda. O que faz com esse valor?","Faço um curso de 3 meses que pode aumentar minha renda em 30%.","Uso metade em um fim de semana num bom hotel e invisto os outros R$ 600.","Aproveito tudo em um fim de semana completo, com tudo incluso."],
+["Aumento","Você foi promovido e seu salário subiu 35%. Qual é o seu primeiro plano para esse aumento?","Nada muda no meu padrão de vida: 100% do aumento vai para o meu futuro.","Divido: 50% para o futuro, 30% para o conforto e 20% para os prazeres.","Finalmente posso me mudar para um apartamento melhor e trocar de carro."],
+["Sonho de futuro","Como você imagina a sua vida daqui a 10 anos?","Com patrimônio suficiente para não precisar mais trabalhar.","Em uma casa confortável, viajando 2 vezes por ano e trabalhando no que gosto.","Em um lugar incrível, com carro bom, sem olhar preço no dia a dia."]];
 var QCONT=[["S","América do Sul"],["N","América do Norte"],["E","Europa"],["A","África ou Ásia"],["O","Outra região (sem ajuste)"]];
 var CNT={S:"BR AR CL CO PE UY PY BO EC VE",N:"US CA MX CR CU DO GT HN HT JM NI PA SV",E:"PT IE GB ES IT FR DE AT BE BG HR CZ DK EE FI GR HU IS LV LT LU MT NL NO PL RO RS SK SI SE CH UA CY RU",A:"JP CN KR IN ID IL IR LB PH PK BD SA SG TH VN AE EG KE MA NG SN ZA AO MZ CV GH TR",O:"AU NZ"};
 function qzContOf(){var v=PF.nac||"",iso=v;if(v.charAt(0)==="c"){var c=(PF.nacs||[]).filter(function(x){return x.v===v})[0];iso=c&&c.i||""}if(!iso)return"";for(var k in CNT)if((" "+CNT[k]+" ").indexOf(" "+iso+" ")>=0)return k;return""}
@@ -692,20 +692,19 @@ function qzCalc(ans,age,cont){
  else if(cont==="E")cl.push("reforçamos Custos Fixos e reduzimos Metas por estar na Europa (aluguel e impostos)");
  else if(cont==="N")cl.push("reforçamos Liberdade Financeira e Conhecimento por estar na América do Norte");
  else if(cont==="A")cl.push("reforçamos Metas e reduzimos Prazeres por estar na África ou Ásia (apoio familiar)");
- var nm=(typeof nome==="string"&&nome)?nome:"",msg=(nm?nm+", s":"S")+"eu perfil é "+name+(band?" com toque de "+band:"")+".";
- if(cl.length){var t=cl.join(" e ");msg+=" "+t.charAt(0).toUpperCase()+t.slice(1)+"."}
+ var nm=(typeof nome==="string"&&nome)?nome:"",msg=(nm?nm+", s":"S")+"eu perfil é "+name+(band?" com toque de "+band:"")+". "+desc;
  return{name:name,desc:desc,msg:msg,fin:fin,n:n}}
 var QZ={step:0,ans:[],age:"",cont:"",res:null,shown:false};
-function qzOpen(){QZ.step=0;QZ.ans=[];QZ.age=qzAgeOf();QZ.cont=qzContOf();QZ.res=null;qzRender();Q("qzbg").classList.add("open")}
+function qzOpen(){QZ.step=0;QZ.ans=[];QZ.age=qzAgeOf();QZ.cont=qzContOf();QZ.res=null;QZ.ord=QZQ.map(function(){var a=["A","B","C"];for(var i=2;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t}return a});qzRender();Q("qzbg").classList.add("open")}
 function qzClose(){Q("qzbg").classList.remove("open")}
 function qzRender(){var h="",s=QZ.step;
  h+='<div class="qzh"><button type="button" class="qzb" data-qback="1" aria-label="Voltar">‹</button><b>Perfil de poupador</b><button type="button" class="qzb" data-qclose="1" aria-label="Fechar">✕</button></div>';
  if(s<7){var q=QZQ[s];h+='<div class="bar sm"><i style="width:'+((s+1)/7*100)+'%;background:var(--navy)"></i></div><div class="qzg">PERGUNTA '+(s+1)+' DE 7 · '+esc(q[0]).toUpperCase()+'</div><div class="qzq">'+esc(q[1])+'</div>';
-  ["A","B","C"].forEach(function(L,i){h+='<button type="button" class="lopt'+(QZ.ans[s]===L?" on":"")+'" data-qa="'+L+'"><span>'+L+') '+esc(q[2+i])+'</span></button>'})}
+  (QZ.ord&&QZ.ord[s]||["A","B","C"]).forEach(function(L){h+='<button type="button" class="lopt'+(QZ.ans[s]===L?" on":"")+'" data-qa="'+L+'"><span>'+esc(q[2+"ABC".indexOf(L)])+'</span></button>'})}
  else if(s===7){h+='<div class="qzq">Para personalizar o resultado</div><div class="info">Usamos sua idade e sua região para ajustar a sugestão. Já preenchemos com o que há no seu perfil, se existir.</div><label for="qage">Idade</label><input id="qage" type="text" inputmode="numeric" maxlength="3" placeholder="Ex.: 28" autocomplete="off" value="'+esc(QZ.age)+'"><label>Onde você mora?</label>';
   QCONT.forEach(function(c){h+='<button type="button" class="lopt'+(QZ.cont===c[0]?" on":"")+'" data-qc="'+c[0]+'"><span>'+c[1]+'</span></button>'});
   h+='<button type="button" class="save gbtn" data-qgo="1" style="margin-top:14px"'+(QZ.cont?"":" disabled")+'>Ver meu perfil</button>'}
- else{var r=QZ.res;h+='<div class="pfk">Seu perfil de poupador</div><div class="pfn">'+esc(r.name)+'</div><div class="info">'+esc(r.desc)+'</div><div class="info">'+esc(r.msg)+'</div><div class="bh" style="margin-top:14px">Distribuição sugerida</div>';
+ else{var r=QZ.res;h+='<div class="pfk">Seu perfil de poupador</div><div class="pfn">'+esc(r.name)+'</div><div class="info">'+esc(r.msg)+'</div><div class="bh" style="margin-top:14px">Distribuição sugerida</div>';
   BCATS.slice().sort(function(a,b){return r.fin[b]-r.fin[a]}).forEach(function(c){h+='<div class="qzr"><i class="tgdot" style="background:'+COL[c]+'"></i><span>'+esc(c)+'</span><b>'+r.fin[c]+'%</b></div>'});
   h+='<button type="button" class="save gbtn" data-qapply="1" style="margin-top:14px">Aplicar ao meu orçamento</button><div class="info">Depois de aplicar, você pode ajustar cada porcentagem em Controle de Orçamento.</div><button type="button" class="cancel" data-qredo="1">Refazer o quiz</button>'}
  Q("qzsh").innerHTML=h;Q("qzsh").scrollTop=0}
@@ -717,7 +716,7 @@ Q("qzsh").addEventListener("click",function(e){var t=e.target.closest("[data-qa]
  if(d.qgo){if(!QZ.cont)return;QZ.res=qzCalc(QZ.ans,QZ.age,QZ.cont);QZ.step=8;qzRender();return}
  if(d.qredo){qzOpen();return}
  if(d.qapply){var r=QZ.res;if(!r)return;PS=Object.assign(PS,{done:true,name:r.name,desc:r.desc,msg:r.msg,fin:r.fin,age:QZ.age,cont:QZ.cont,ans:QZ.ans.slice()});psSave();BCATS.forEach(function(c){BG.pct[c]=r.fin[c]});BG.d={};BG.view="orc";BG.msg="Distribuição do seu perfil aplicada.";bSave();qzClose();render();Q("main").scrollTop=0}});
-function qzCard(){if(PS.done)return'<div class="box"><div class="pfk">Seu perfil de poupador</div><div class="pfn">'+esc(PS.name)+'</div><div class="info">'+esc(PS.desc)+'</div><div class="info">'+esc(PS.msg)+'</div><button type="button" class="cancel" data-qz="1">Refazer o quiz</button></div>';
+function qzCard(){if(PS.done){var m=PS.msg;try{if(PS.ans&&PS.ans.length===7)m=qzCalc(PS.ans,PS.age,PS.cont).msg}catch(e){}return'<div class="box"><div class="pfk">Seu perfil de poupador</div><div class="pfn">'+esc(PS.name)+'</div><div class="info">'+esc(m)+'</div><button type="button" class="cancel" data-qz="1">Refazer o quiz</button></div>'}
  return'<div class="box"><div class="bh">Descubra seu perfil de poupador</div><div class="info">Responda 7 perguntas rápidas e receba uma sugestão de distribuição para o seu orçamento.</div><button type="button" class="save gbtn" data-qz="1">Descobrir meu perfil</button></div>'}
 function qzNudge(){if(PS.done||PS.never||QZ.shown)return;QZ.shown=true;setTimeout(function(){if(tab==="metas")Q("qzhi").classList.add("open")},350)}
 Q("qzhi").onclick=function(e){var t=e.target.closest("[data-qh]");if(!t){if(e.target.id==="qzhi")Q("qzhi").classList.remove("open");return}
