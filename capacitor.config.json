@@ -1,0 +1,7 @@
+{
+  "appId": "com.caiograton.meubolso",
+  "appName": "Meu Bolso",
+  "webDir": "www",
+  "android": { "allowMixedContent": false },
+  "backgroundColor": "#7B1F2A"
+}

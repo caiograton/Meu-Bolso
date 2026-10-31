@@ -1,0 +1,18 @@
+{
+  "name": "meu-bolso",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Meu Bolso - controle financeiro pessoal",
+  "scripts": {
+    "build:web": "mkdir -p www && cp index.html www/index.html",
+    "icons": "capacitor-assets generate --android --assetPath assets"
+  },
+  "dependencies": {
+    "@capacitor/android": "latest",
+    "@capacitor/core": "latest"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "latest",
+    "@capacitor/cli": "latest"
+  }
+}

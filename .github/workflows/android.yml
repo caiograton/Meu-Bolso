@@ -1,0 +1,58 @@
+name: Gerar APK
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['README.md']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Instalar dependências
+        run: npm install --no-audit --no-fund
+
+      - name: Preparar página do app
+        run: npm run build:web
+
+      - name: Criar projeto Android
+        run: npx cap add android
+
+      - name: Gerar ícones e tela de abertura
+        run: npm run icons
+
+      - name: Sincronizar
+        run: npx cap sync android
+
+      - name: Compilar APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Guardar APK como arquivo da execução
+        uses: actions/upload-artifact@v4
+        with:
+          name: MeuBolso-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Publicar APK em uma versão (release)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.1.${{ github.run_number }}
+          name: Meu Bolso 0.1.${{ github.run_number }}
+          body: APK de teste gerado automaticamente a partir do commit ${{ github.sha }}.
+          files: android/app/build/outputs/apk/debug/app-debug.apk
