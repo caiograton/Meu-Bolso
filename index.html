@@ -264,13 +264,16 @@ function header(t){
  el.innerHTML=hide?'<span>'+SYM()+'</span> <span class="nm">••••</span>':(s<0?"-":"")+nf.formatToParts(Math.abs(s)).map(function(p){return p.type==="currency"||p.type==="literal"?p.value:'<span class="nm">'+p.value+'</span>'}).join("");el.className="saldo"+(s<0?" neg":s>0?" pos":"");
  var b=document.getElementById("badge");b.textContent=!t.e&&!t.s?"Sem lançamentos":s<0?"No negativo":"No positivo";b.className="badge"+(s<0?"":" pos");
 }
+function arcSeg(col,f0,f1,r){r=r||46;var df=f1-f0;if(df<=0)return"";if(df>=0.9999)return'<circle cx="60" cy="60" r="'+r+'" fill="none" stroke="'+col+'" stroke-width="20"/>';
+ var a0=-Math.PI/2+f0*2*Math.PI,a1=-Math.PI/2+f1*2*Math.PI,x0=60+r*Math.cos(a0),y0=60+r*Math.sin(a0),x1=60+r*Math.cos(a1),y1=60+r*Math.sin(a1);
+ return'<path d="M'+x0.toFixed(3)+" "+y0.toFixed(3)+"A"+r+" "+r+" 0 "+(df>0.5?1:0)+" 1 "+x1.toFixed(3)+" "+y1.toFixed(3)+'" fill="none" stroke="'+col+'" stroke-width="20"/>'}
 function donut(l){
  var by={},bs={},tt=0;l.forEach(function(i){if(i.t==="s"){by[i.cat]=(by[i.cat]||0)+i.val;bs[i.cat]=bs[i.cat]||{};bs[i.cat][i.sub]=(bs[i.cat][i.sub]||0)+i.val;tt+=i.val}});
  var ks=Object.keys(by).sort(function(a,b){return by[b]-by[a]});
  if(!tt)return'<div class="empty">Sem saídas neste mês.</div>';
- var r=46,c=2*Math.PI*r,off=0,arcs="",leg="";
- ks.forEach(function(k){var p=by[k]/tt,d=p*c;
-  arcs+='<circle cx="60" cy="60" r="'+r+'" fill="none" stroke="'+COL[k]+'" stroke-width="20" stroke-dasharray="'+d+' '+(c-d)+'" stroke-dashoffset="'+(-off)+'" transform="rotate(-90 60 60)"/>';off+=d;
+ var off=0,arcs="",leg="";
+ ks.forEach(function(k){var p=by[k]/tt;
+  arcs+=arcSeg(COL[k],off,Math.min(1,off+p));off+=p;
   var hasS=Object.keys(bs[k]).filter(Boolean).length>0,op=!!OPEN[k];leg+='<div class="lgc'+(hasS?' tg':'')+'"'+(hasS?' data-tg="'+esc(k)+'"':'')+'><i style="background:'+COL[k]+'"></i><b style="font-weight:600">'+(k||"Sem categoria")+'</b><em>'+Math.round(p*100)+'%</em>'+(hasS?'<span class="chv'+(op?' open':'')+'">\u25be</span>':'')+'</div>';
   if(op)Object.keys(bs[k]).filter(Boolean).sort(function(a,b){return bs[k][b]-bs[k][a]}).forEach(function(s){leg+='<div class="sub"><i style="background:'+(SCOL[k+"|"+s]||COL[k])+'"></i>'+s+'<em>'+eur.format(bs[k][s])+'</em></div>'})});
  return'<div class="donut"><svg viewBox="0 0 120 120" role="img" aria-label="Gastos por categoria">'+arcs+'</svg><div class="leg">'+leg+'</div></div>';
@@ -635,8 +638,8 @@ function bDraft(c){return BG.d[c]!==undefined?BG.d[c]:pfmt(BG.pct[c])}
 function bNum(c){var v=parseFloat(String(bDraft(c)).replace(",",".").replace(/[^0-9.]/g,""));return isFinite(v)?Math.min(100,Math.max(0,v)):0}
 function bTotal(){return BCATS.reduce(function(a,c){return a+bNum(c)},0)}
 function bSpent(c){var t=0;lanc(cur.y,cur.m).forEach(function(i){if(i.t==="s"&&i.cat===c)t+=i.val});return t}
-function bdonut(){var tot=bTotal(),r=46,c=2*Math.PI*r,off=0,arcs="",leg="";
- BCATS.forEach(function(k){var p=bNum(k);if(p>0&&tot>0){var d=p/tot*c;arcs+='<circle cx="60" cy="60" r="46" fill="none" stroke="'+COL[k]+'" stroke-width="20" stroke-dasharray="'+d+' '+(c-d)+'" stroke-dashoffset="'+(-off)+'" transform="rotate(-90 60 60)"/>';off+=d}
+function bdonut(){var tot=bTotal(),off=0,arcs="",leg="";
+ BCATS.forEach(function(k){var p=bNum(k);if(p>0&&tot>0){var f=p/tot;arcs+=arcSeg(COL[k],off,Math.min(1,off+f));off+=f}
   leg+='<div><i style="background:'+COL[k]+'"></i>'+esc(k)+'<em>'+pfmt(p)+'%</em></div>'});
  return'<div class="donut"><svg viewBox="0 0 120 120" role="img">'+(arcs||'<circle cx="60" cy="60" r="46" fill="none" stroke="var(--line)" stroke-width="20"/>')+'<text x="60" y="58" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">'+pfmt(tot)+'%</text><text x="60" y="73" text-anchor="middle" font-size="9" fill="var(--muted)">Total</text></svg><div class="leg">'+leg+'</div></div>'}
 function budgetHtml(){
