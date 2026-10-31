@@ -102,6 +102,11 @@ header>svg path+path{stroke:var(--wave)}
 .tgrow button{width:30px;height:30px;color:var(--muted);font-size:calc(17px*var(--fs))}
 .tgpar{display:flex;align-items:center;gap:8px;margin:12px 0 2px;font-size:calc(13px*var(--fs));font-weight:600}.tgpar i{width:10px;height:10px;border-radius:3px}
 .tged{padding:10px 4px;border-bottom:1px solid var(--line)}.tgsw{display:flex;flex-wrap:wrap;gap:9px;margin-top:10px}
+#tour{position:absolute;inset:0;z-index:16;display:none}#tour.on{display:block}.trg{position:absolute;border-radius:14px;box-shadow:0 0 0 100vmax rgba(10,10,20,.58);border:2px solid #F7D774;pointer-events:none;transition:all .25s}
+.tb{position:absolute;background:var(--card);color:var(--text);border-radius:16px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.4);font-size:calc(14px*var(--fs));line-height:1.45;animation:tbin .28s ease-out;--ax:30px}
+.tb::before{content:"";position:absolute;left:var(--ax);width:14px;height:14px;background:var(--card);transform:translateX(-50%) rotate(45deg)}.tb.dn::before{top:-7px}.tb.up::before{bottom:-7px}
+.tb.dn{transform-origin:var(--ax) 0}.tb.up{transform-origin:var(--ax) 100%}.tbb{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px}.tsk{color:var(--muted);font-size:calc(13px*var(--fs));text-decoration:underline;padding:6px 0}.tok{margin-left:auto;padding:9px 20px}
+@keyframes tbin{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:scale(1)}}
 #qzhi,#nmhi{z-index:8;align-items:center;justify-content:center;padding:20px}#qzbg{z-index:7}.qzh{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.qzh b{font-size:calc(16px*var(--fs))}.qzb{width:36px;height:36px;border-radius:50%;font-size:20px;color:var(--text)}.qzg{font-size:calc(12px*var(--fs));color:var(--muted);font-weight:700;letter-spacing:.5px;margin-top:12px}.qzq{font-size:calc(17px*var(--fs));font-weight:700;margin:6px 0 10px;line-height:1.35}.qzr{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}.qzr span{flex:1}.pfk{font-size:calc(12px*var(--fs));color:var(--muted);font-weight:700;letter-spacing:.5px;text-transform:uppercase}.pfn{font-size:calc(24px*var(--fs));font-weight:800;margin:2px 0 6px}.qzbtns .cancel{margin-top:2px}.avh{pointer-events:auto;cursor:pointer}
 .phv{position:absolute;inset:0;z-index:12;background:rgba(12,10,12,.42);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);display:none;align-items:center;justify-content:center}.phv.open{display:flex;animation:phvin .22s ease-out}.phv img{width:min(78%,320px);aspect-ratio:1;border-radius:50%;object-fit:cover;display:block;box-shadow:0 14px 44px rgba(0,0,0,.45);animation:phvz .26s ease-out;transform-origin:0 0}
 @keyframes phvin{from{opacity:0}to{opacity:1}}@keyframes phvz{from{transform:scale(.28);opacity:.5}to{transform:scale(1);opacity:1}}
@@ -766,12 +771,50 @@ Q("qzhi").onclick=function(e){var t=e.target.closest("[data-qh]");if(!t){if(e.ta
 
 var NMH=Q("nmhi").querySelector(".dlg").innerHTML;
 function nmSplit(v){var t=String(v).trim().split(/\s+/).filter(Boolean);return{n:t[0]||"",s:t.slice(1).join(" ")}}
-function nmWelcome(sp){var d=Q("nmhi").querySelector(".dlg");d.innerHTML='<h3>Bem-vindo ao Meu Bolso, '+esc(sp.n)+'!</h3><p class="cfmq">Que bom ter você por aqui. Registre suas entradas e saídas, acompanhe o orçamento e as metas e gere extratos quando precisar.</p>'+(sp.s?'<p class="cfmq">Separei o seu nome: <b>Nome</b> '+esc(sp.n)+' · <b>Sobrenome</b> '+esc(sp.s)+'. Se quiser ajustar, é só ir em Configurações › Perfil.</p>':'')+'<div class="qzbtns"><button type="button" class="save gbtn" data-nm="done">Começar</button></div>'}
+var TOURT={
+wt:["Bem-vindo ao Meu Bolso, {n}!","Welcome to Meu Bolso, {n}!","¡Bienvenido a Meu Bolso, {n}!","Meu Bolsoへようこそ、{n}さん！"],
+wb:["Que bom ter você por aqui. Registre suas entradas e saídas, acompanhe o orçamento e as metas e gere extratos quando precisar.","Great to have you here. Record your income and expenses, track your budget and goals, and generate statements whenever you need.","Qué bueno tenerte aquí. Registra tus ingresos y gastos, sigue tu presupuesto y tus metas, y genera extractos cuando lo necesites.","ようこそ。収入と支出を記録し、予算と目標を管理し、必要なときに明細書を作成できます。"],
+wi:["Agora vou apresentar o app, passo a passo. Se preferir, você pode pular a apresentação.","Now I'll walk you through the app, step by step. If you prefer, you can skip the tour.","Ahora te presentaré la app, paso a paso. Si prefieres, puedes omitir la presentación.","これからアプリを順番にご紹介します。ご希望ならスキップできます。"],
+wgo:["Apresentar o app","Show me around","Presentar la app","紹介を見る"],
+wsk:["Pular apresentação","Skip the tour","Omitir presentación","スキップ"],
+ok:["Entendi","Got it","Entendido","わかりました"],
+rest:["Pular o restante","Skip the rest","Omitir el resto","残りをスキップ"],
+cfg:["Este é o botão de <b>Configurações</b>. Nele você corrige seu nome e sobrenome, caso eu tenha separado errado, e encontra as áreas para configurar o app.","This is the <b>Settings</b> button. Here you can fix your first and last name if I split them wrong, and find the areas to set up the app.","Este es el botón de <b>Configuración</b>. Ahí puedes corregir tu nombre y apellido si los separé mal, y encuentras las áreas para configurar la app.","これは<b>設定</b>ボタンです。名前と姓の分け方が違っていたらここで直せます。アプリの各種設定もここにあります。"],
+cfgs:["Separei o seu nome assim: <b>Nome</b> {n} · <b>Sobrenome</b> {s}. Se estiver errado, é só corrigir no botão de <b>Configurações</b>, aqui em cima.","I split your name like this: <b>First name</b> {n} · <b>Last name</b> {s}. If that's wrong, just fix it with the <b>Settings</b> button right here.","Separé tu nombre así: <b>Nombre</b> {n} · <b>Apellido</b> {s}. Si no es correcto, corrígelo con el botón de <b>Configuración</b>, aquí arriba.","お名前はこのように分けました：<b>名</b> {n} · <b>姓</b> {s}。違っていたら、ここの<b>設定</b>ボタンから直せます。"],
+olho:["Este botão <b>oculta ou mostra os valores</b> na tela, útil para usar o app perto de outras pessoas.","This button <b>hides or shows the amounts</b> on screen, handy when other people are around.","Este botón <b>oculta o muestra los valores</b> en pantalla, útil cuando hay gente cerca.","このボタンで金額の<b>表示/非表示</b>を切り替えます。人前で使うときに便利です。"],
+resumo:["<b>Resumo</b>: o panorama do mês, com saldo, gráficos e para onde foi o seu dinheiro.","<b>Summary</b>: the month at a glance, with balance, charts and where your money went.","<b>Resumen</b>: el panorama del mes, con saldo, gráficos y adónde fue tu dinero.","<b>サマリー</b>：残高やグラフなど、今月の概要とお金の行き先を確認できます。"],
+lanc:["<b>Lançamentos</b>: a lista das suas entradas e saídas, onde você edita ou apaga cada registro.","<b>Entries</b>: the list of your income and expenses, where you edit or delete each record.","<b>Movimientos</b>: la lista de tus ingresos y gastos, donde editas o borras cada registro.","<b>取引</b>：収入と支出の一覧です。各記録の編集や削除ができます。"],
+fixos:["<b>Fixos</b>: receitas e despesas que se repetem todo mês, para você não precisar lançar de novo.","<b>Recurring</b>: income and expenses that repeat every month, so you don't have to log them again.","<b>Fijos</b>: ingresos y gastos que se repiten cada mes, para no tener que registrarlos otra vez.","<b>固定</b>：毎月繰り返す収入と支出です。何度も入力する必要はありません。"],
+metas:["<b>Metas</b>: seus objetivos de poupança, com quanto guardar por mês para chegar lá.","<b>Goals</b>: your saving goals, showing how much to put aside each month to reach them.","<b>Metas</b>: tus objetivos de ahorro, con cuánto guardar al mes para lograrlos.","<b>目標</b>：貯蓄目標と、達成のために毎月いくら貯めればよいかを表示します。"],
+fab:["Este botão <b>+</b> cria um novo lançamento: uma entrada ou uma saída.","This <b>+</b> button adds a new entry: an income or an expense.","Este botón <b>+</b> crea un nuevo movimiento: un ingreso o un gasto.","この<b>+</b>ボタンで新しい取引（収入または支出）を追加します。"]};
+function tt(k,o){var i={pt:0,en:1,es:2,ja:3}[LANG];if(i==null)i=0;var t=TOURT[k][i];return t.replace(/\{(\w)\}/g,function(_,x){return o&&o[x]!=null?esc(o[x]):""})}
+function nmWelcome(sp){NMSP=sp;var d=Q("nmhi").querySelector(".dlg");d.innerHTML='<h3>'+tt("wt",{n:sp.n})+'</h3><p class="cfmq">'+tt("wb")+'</p><p class="cfmq" style="margin-top:10px">'+tt("wi")+'</p><div class="qzbtns"><button type="button" class="save gbtn" data-nm="tour">'+tt("wgo")+'</button><button type="button" class="cancel" data-nm="skiptour">'+tt("wsk")+'</button></div>'}
+var NMSP={n:"",s:""},TS=[],TI=0;
+function tourStart(sp){TS=[].concat(sp&&sp.s?[{s:"#cfg",k:"cfgs"}]:[],[{s:"#cfg",k:"cfg"}],[{s:"#olho",k:"olho"},{s:'nav [data-t="resumo"]',k:"resumo"},{s:'nav [data-t="lanc"]',k:"lanc"},{s:'nav [data-t="fixos"]',k:"fixos"},{s:'nav [data-t="metas"]',k:"metas"},{s:"#fab",k:"fab"}]);TI=0;
+ var o=Q("tour");if(!o){o=document.createElement("div");o.id="tour";o.innerHTML='<i class="trg"></i><div class="tb"><div class="tbt"></div><div class="tbb"><button type="button" class="tsk"></button><button type="button" class="save gbtn tok"></button></div></div>';Q("app").appendChild(o);
+  o.querySelector(".tok").onclick=function(){TI++;tourShow()};o.querySelector(".tsk").onclick=tourEnd}
+ o.classList.add("on");tourShow()}
+function tourEnd(){var o=Q("tour");if(o)o.classList.remove("on")}
+function tourShow(){var o=Q("tour"),st=null,el=null;
+ while(TI<TS.length){st=TS[TI];el=document.querySelector(st.s);if(el&&el.offsetWidth>0)break;el=null;TI++}
+ if(!el){tourEnd();return}
+ var tb=o.querySelector(".tb"),rg=o.querySelector(".trg"),a=Q("app").getBoundingClientRect(),r=el.getBoundingClientRect(),aw=a.width;
+ var h=tt(st.k,{n:NMSP.n,s:NMSP.s});
+ o.querySelector(".tbt").innerHTML=h;o.querySelector(".tok").textContent=tt("ok");
+ var sk=o.querySelector(".tsk");sk.textContent=tt("rest");sk.style.visibility=TI===0?"hidden":"visible";
+ rg.style.left=(r.left-a.left-5)+"px";rg.style.top=(r.top-a.top-5)+"px";rg.style.width=(r.width+10)+"px";rg.style.height=(r.height+10)+"px";
+ var bw=Math.min(300,aw-24);tb.style.width=bw+"px";tb.classList.remove("up","dn");tb.style.visibility="hidden";tb.style.top="0px";
+ var bh=tb.offsetHeight,cx=r.left-a.left+r.width/2,below=(r.top-a.top)<a.height/2,left=Math.max(12,Math.min(cx-bw/2,aw-12-bw));
+ tb.style.left=left+"px";tb.style.top=(below?(r.bottom-a.top+14):(r.top-a.top-14-bh))+"px";
+ tb.style.setProperty("--ax",Math.max(18,Math.min(cx-left,bw-18))+"px");tb.classList.add(below?"dn":"up");
+ tb.style.visibility="visible";tb.style.animation="none";void tb.offsetWidth;tb.style.animation=""}
 function nmClose(){Q("nmhi").classList.remove("open");setTimeout(function(){Q("nmhi").querySelector(".dlg").innerHTML=NMH},250)}
 Q("nmhi").onclick=function(e){var t=e.target.closest("[data-nm]");if(!t)return;var k=t.dataset.nm;
  if(k==="ok"){var v=Q("nmin").value.trim();if(!v){Q("nmin").focus();return}var sp=nmSplit(v);nome=sp.n;Q("ni").value=nome;try{localStorage.setItem("nome",nome)}catch(x){}
   if(sp.s&&!PF.sobrenome){PF.sobrenome=sp.s;Q("ps").value=sp.s;pfSave()}
   setNome();saveSoon();NOME_NEW=false;nmWelcome(sp);return}
+ if(k==="tour"){var sp0=NMSP;nmClose();setTimeout(function(){tourStart(sp0)},320);return}
+ if(k==="skiptour"){nmClose();return}
  if(k==="skip"){try{localStorage.setItem("nome","")}catch(x){}}
  NOME_NEW=false;nmClose()};
 Q("ni").onchange=function(){var sp=nmSplit(this.value);if(sp.s&&!PF.sobrenome){nome=sp.n;this.value=nome;PF.sobrenome=sp.s;Q("ps").value=sp.s;pfSave();try{localStorage.setItem("nome",nome)}catch(e){}setNome();saveSoon()}};
