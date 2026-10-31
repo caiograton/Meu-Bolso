@@ -39,6 +39,29 @@ public class InsetMathTest {
         contentH = H;                               // janela fixa
         usable = contentH - InsetMath.topPad(0, 100) - InsetMath.bottomPad(H, contentH, 63, 900);
         eq("area util com teclado (janela fixa)", usable, 1440 - 100);
+        // animação do teclado quadro a quadro, janela fixa: a margem acompanha o teclado sem saltos
+        int prev = -1;
+        boolean smooth = true;
+        for (int ime = 0; ime <= 900; ime += 30) {
+            int pad = InsetMath.bottomPad(H, H, 63, ime);
+            if (pad != Math.max(63, ime)) smooth = false;
+            if (pad < prev) smooth = false;      // abrindo: nunca diminui
+            prev = pad;
+        }
+        eq("abrir o teclado acompanha sem saltos", smooth ? 1 : 0, 1);
+        prev = Integer.MAX_VALUE; smooth = true;
+        for (int ime = 900; ime >= 0; ime -= 30) {
+            int pad = InsetMath.bottomPad(H, H, 63, ime);
+            if (pad > prev) smooth = false;      // fechando: nunca aumenta
+            prev = pad;
+        }
+        eq("fechar o teclado acompanha sem saltos", smooth ? 1 : 0, 1);
+        // janela encolhida pelo sistema durante a animação: nunca há margem extra
+        boolean none = true;
+        for (int ime = 0; ime <= 900; ime += 30) {
+            if (InsetMath.bottomPad(H, H - ime, 63, ime) != 0 && ime >= 63) none = false;
+        }
+        eq("janela encolhida: sem margem extra", none ? 1 : 0, 1);
         if (fails > 0) { System.out.println(fails + " teste(s) falharam"); System.exit(1); }
         System.out.println("Todos os testes passaram.");
     }

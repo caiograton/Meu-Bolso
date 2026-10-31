@@ -24,15 +24,19 @@ import android.widget.FrameLayout;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsAnimationCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import com.getcapacitor.BridgeActivity;
+import java.util.List;
 
 public class MainActivity extends BridgeActivity {
     private static final int BORDO = 0xFF7B1F2A;
     private View top;
     private View bottom;
     private View content;
+    // altura do teclado durante a animação (-1 = sem animação em andamento)
+    private int animIme = -1;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -44,6 +48,9 @@ public class MainActivity extends BridgeActivity {
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         getWindow().setStatusBarColor(BORDO);
         getWindow().setNavigationBarColor(Color.BLACK);
+        // fundo preto: se algum pedaço da janela aparecer por trás do app (por ex.
+        // enquanto o teclado desliza), ele continua o preto da barra inferior.
+        getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.BLACK));
         WindowInsetsControllerCompat wc = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
         wc.setAppearanceLightStatusBars(false);
         wc.setAppearanceLightNavigationBars(false);
@@ -59,6 +66,7 @@ public class MainActivity extends BridgeActivity {
         decor.addView(bottom, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, Gravity.BOTTOM));
 
         content = findViewById(android.R.id.content);
+        content.setBackgroundColor(Color.BLACK);
         ViewCompat.setOnApplyWindowInsetsListener(content, (v, w) -> {
             v.post(this::applyInsets);
             return WindowInsetsCompat.CONSUMED;
@@ -66,6 +74,22 @@ public class MainActivity extends BridgeActivity {
         // Depois de cada layout: se o sistema já encolheu a janela por causa do
         // teclado, não somamos o teclado de novo (era o que deixava a tela cinza).
         content.getViewTreeObserver().addOnGlobalLayoutListener(this::applyInsets);
+        // O app acompanha o teclado quadro a quadro (abre e fecha deslizando).
+        ViewCompat.setWindowInsetsAnimationCallback(content,
+                new WindowInsetsAnimationCompat.Callback(WindowInsetsAnimationCompat.Callback.DISPATCH_MODE_CONTINUE_ON_SUBTREE) {
+            @Override
+            public WindowInsetsCompat onProgress(WindowInsetsCompat insets, List<WindowInsetsAnimationCompat> running) {
+                animIme = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
+                applyInsets();
+                return insets;
+            }
+
+            @Override
+            public void onEnd(WindowInsetsAnimationCompat animation) {
+                animIme = -1;
+                applyInsets();
+            }
+        });
         ViewCompat.requestApplyInsets(content);
     }
 
@@ -91,8 +115,8 @@ public class MainActivity extends BridgeActivity {
         WindowInsetsCompat w = ViewCompat.getRootWindowInsets(content);
         if (w == null) return;
         Insets sys = w.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
-        boolean imeVisible = w.isVisible(WindowInsetsCompat.Type.ime());
-        int imeBottom = imeVisible ? w.getInsets(WindowInsetsCompat.Type.ime()).bottom : 0;
+        boolean imeVisible = animIme >= 0 ? animIme > 0 : w.isVisible(WindowInsetsCompat.Type.ime());
+        int imeBottom = animIme >= 0 ? animIme : (imeVisible ? w.getInsets(WindowInsetsCompat.Type.ime()).bottom : 0);
         int[] loc = new int[2];
         content.getLocationOnScreen(loc);
         int bp = InsetMath.bottomPad(screenHeight(), loc[1] + content.getHeight(), sys.bottom, imeBottom);
