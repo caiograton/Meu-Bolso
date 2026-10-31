@@ -30,6 +30,9 @@ jobs:
       - name: Preparar página do app
         run: npm run build:web
 
+      - name: Numerar a versão dentro do app
+        run: sed -i "s/__APP_VERSION__/0.1.${{ github.run_number }}/g" www/index.html
+
       - name: Criar projeto Android
         run: npx cap add android
 

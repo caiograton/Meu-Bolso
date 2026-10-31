@@ -33,6 +33,11 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(SafeAreaPlugin.class);
         super.onCreate(savedInstanceState);
 
+        // Modo "borda a borda" igual em todas as versões do Android: o teclado
+        // passa a ser tratado só por nós (abaixo), sem redimensionar duas vezes.
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+
         getWindow().setStatusBarColor(BORDO);
         getWindow().setNavigationBarColor(Color.BLACK);
         WindowInsetsControllerCompat wc = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
@@ -53,8 +58,11 @@ public class MainActivity extends BridgeActivity {
         final View content = findViewById(android.R.id.content);
         ViewCompat.setOnApplyWindowInsetsListener(content, (v, w) -> {
             Insets sys = w.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
-            Insets ime = w.getInsets(WindowInsetsCompat.Type.ime());
-            v.setPadding(sys.left, sys.top, sys.right, Math.max(sys.bottom, ime.bottom));
+            int imeBottom = 0;
+            if (android.os.Build.VERSION.SDK_INT >= 30) {
+                imeBottom = w.getInsets(WindowInsetsCompat.Type.ime()).bottom;
+            }
+            v.setPadding(sys.left, sys.top, sys.right, Math.max(sys.bottom, imeBottom));
             top.getLayoutParams().height = sys.top;
             top.requestLayout();
             bottom.getLayoutParams().height = sys.bottom;
