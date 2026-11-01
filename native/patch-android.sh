@@ -9,6 +9,8 @@ cp native/DeviceLockPlugin.java "$PKG_DIR/DeviceLockPlugin.java"
 cp native/SafeAreaPlugin.java "$PKG_DIR/SafeAreaPlugin.java"
 cp native/InsetMath.java "$PKG_DIR/InsetMath.java"
 cp native/ImeTracker.java "$PKG_DIR/ImeTracker.java"
+cp native/widget/QuickWidgetPlugin.java "$PKG_DIR/QuickWidgetPlugin.java"
+cp native/widget/QuickWidgetProvider.java "$PKG_DIR/QuickWidgetProvider.java"
 
 cat > "$PKG_DIR/MainActivity.java" <<'JAVA'
 package com.caiograton.meubolso;
@@ -42,7 +44,11 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(DeviceLockPlugin.class);
         registerPlugin(SafeAreaPlugin.class);
+        registerPlugin(QuickWidgetPlugin.class);
         super.onCreate(savedInstanceState);
+        if (QuickWidgetPlugin.ACTION_QUICK.equals(getIntent().getAction())) {
+            QuickWidgetPlugin.pending = true;
+        }
 
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
@@ -103,6 +109,19 @@ public class MainActivity extends BridgeActivity {
             }
         });
         ViewCompat.requestApplyInsets(content);
+    }
+
+    @Override
+    protected void onNewIntent(android.content.Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        if (intent != null && QuickWidgetPlugin.ACTION_QUICK.equals(intent.getAction())) {
+            QuickWidgetPlugin.pending = true;
+            try {
+                getBridge().getWebView().post(() -> getBridge().getWebView().evaluateJavascript(
+                        "window.dispatchEvent(new Event('mbquick'))", null));
+            } catch (Exception ignored) { }
+        }
     }
 
     private int screenHeight() {
@@ -216,5 +235,17 @@ cat > "$RES/values-v31/styles.xml" <<'XML'
     </style>
 </resources>
 XML
+
+# Widget "Lançamento rápido" (barra bordô na tela inicial)
+mkdir -p "$RES/layout" "$RES/xml" "$RES/drawable-nodpi"
+cp native/widget/mb_widget_quick.xml "$RES/layout/mb_widget_quick.xml"
+cp native/widget/mb_widget_bg.xml "$RES/drawable/mb_widget_bg.xml"
+cp native/widget/mb_widget_btn.xml "$RES/drawable/mb_widget_btn.xml"
+cp native/widget/mb_widget_info.xml "$RES/xml/mb_widget_info.xml"
+cp native/widget/mb_widget_glyph.png "$RES/drawable-nodpi/mb_widget_glyph.png"
+if ! grep -q "QuickWidgetProvider" "$MANIFEST"; then
+  sed -i '0,/<\/application>/s//    <receiver android:name="com.caiograton.meubolso.QuickWidgetProvider" android:exported="true" android:label="Meu Bolso">\n            <intent-filter>\n                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" \/>\n            <\/intent-filter>\n            <meta-data android:name="android.appwidget.provider" android:resource="@xml\/mb_widget_info" \/>\n        <\/receiver>\n    <\/application>/' "$MANIFEST"
+fi
+grep -q "QuickWidgetProvider" "$MANIFEST" || { echo "Não foi possível registrar o widget"; exit 1; }
 
 echo "Personalizações nativas aplicadas."
