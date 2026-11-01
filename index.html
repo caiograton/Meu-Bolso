@@ -13,6 +13,7 @@
 --bg:#F5F3EF;--card:#ffffff;--text:#14141b;--muted:#6a6a7a;--line:#e4ded3;--inc:#5C8C6D;--exp:#7B1F2A;--rec:#5C8C6D;--desp:#7B1F2A;--plus:#e6e3dc;--wave:#cfc6b8}
 :root[data-theme="dark"]{color-scheme:dark;--bg:#14141b;--card:#1f2030;--text:#F5F3EF;--muted:#9a9ab0;--line:#2d2f48;--inc:#7fb391;--exp:#d9707d;--rec:#6fa682;--desp:#b3404f;--plus:#fff;--wave:#fff}
 *{box-sizing:border-box;margin:0}
+*{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}body{-webkit-user-select:none;user-select:none}input,textarea,select,[contenteditable]{-webkit-user-select:text;user-select:text}:focus:not(:focus-visible){outline:none}
 html,body{height:100%}
 body{font-family:'Bricolage Grotesque',system-ui,sans-serif;background:var(--ink);color:var(--text);display:flex;justify-content:center}
 #app{width:100%;max-width:430px;height:100%;background:var(--bg);display:flex;flex-direction:column;position:relative;overflow:hidden}
@@ -627,6 +628,7 @@ function goBack(){
  if(isOpen("qzhi")){Q("qzhi").classList.remove("open");return true}
  if(isOpen("plbg")){plClose();return true}
  if(isOpen("cxw")){Q("cxw").classList.remove("open");return true}
+ var xv=Q("exv");if(xv&&!xv.hidden){xv.hidden=true;return true}
  if(isOpen("exw")){exClose();return true}
  if(isOpen("qzbg")){qzClose();return true}
  if(isOpen("gbg")){Q("gbg").classList.remove("open");return true}
