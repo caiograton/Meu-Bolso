@@ -458,7 +458,7 @@ function render(){
   '<h2>Receita × despesa</h2><div class="box'+sc+'">'+chart(l)+'</div>'+
   '<h2>Para onde foi o dinheiro</h2><div class="box'+sc+'">'+donut(l)+'</div>'+'<h2>Seu orçamento</h2><div class="box'+sc+'">'+budgetSummary()+'</div>';
  }else if(tab==="metas"){h=metasHtml()}else if(tab==="lanc"){
-  h=qkTop()+'<button type="button" class="exlnk" data-ex="1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>Gerar extrato</button>'+(l.length?'<div>'+l.map(function(i){return item(i,1)}).join("")+'</div>':'<div class="empty">Nenhum lançamento neste mês.</div>');
+  h='<button type="button" class="exlnk" data-ex="1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>Gerar extrato</button>'+qkTop()+(l.length?'<div>'+l.map(function(i){return item(i,1)}).join("")+'</div>':'<div class="empty">Nenhum lançamento neste mês.</div>');
  }else{
   if(FXV==="plan")h=planListHtml();else h=planSwitch()+'<h2 style="margin-top:10px">Lançamentos fixos</h2><div>'+rules.map(function(r){
    return'<div class="item" data-edit="r'+r.id+'"><div class="dia"><b>'+r.day+'</b><span>'+(r.per==="a"?"todo ano":"todo dia")+'</span></div><div class="desc">'+rowTxt(r)+'</div><div class="val '+(r.t==="e"?"in":"out")+'">'+(r.t==="e"?"+":"−")+(r.cc&&r.cc!==moeda?fmtC(r.val,r.cc):eur.format(r.val))+'</div><button class="del" data-rule="'+r.id+'" aria-label="Excluir">×</button></div>'}).join("")+'</div>'+
