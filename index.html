@@ -593,6 +593,28 @@ Q("plbg").addEventListener("input",function(e){var t=e.target;if(!PL)return;
  else if(t.id==="pltx"){PL.tyo=t.value}
  else if(t.id==="plnm"){PL.nm=t.value;plDesc()}});
 if(Q("plbg"))Q("plbg").addEventListener("keydown",function(e){if(e.key==="Enter"&&e.target.id==="plbar"){PL.open=!PL.open;plRender()}});
+/*voltar*/
+function isOpen(id){var e=Q(id);return !!(e&&e.classList.contains("open"))}
+function goBack(){
+ var t=Q("tour");if(t&&t.classList.contains("on")){tourEnd();return true}
+ var lk=Q("lock");if(lk&&lk.classList.contains("on"))return false;
+ if(isOpen("cfm")){Q("cfmv").click();return true}
+ if(isOpen("nmhi")){var sk=document.querySelector('#nmhi [data-nm="skip"]');if(sk)sk.click();else Q("nmhi").classList.remove("open");return true}
+ if(isOpen("calw")){Q("calw").classList.remove("open");return true}
+ if(isOpen("phw")){closePhoto();return true}
+ if(isOpen("qzhi")){Q("qzhi").classList.remove("open");return true}
+ if(isOpen("plbg")){plClose();return true}
+ if(isOpen("cxw")){Q("cxw").classList.remove("open");return true}
+ if(isOpen("exw")){exClose();return true}
+ if(isOpen("qzbg")){qzClose();return true}
+ if(isOpen("gbg")){Q("gbg").classList.remove("open");return true}
+ if(isOpen("bg")){closeSheet();return true}
+ if(isOpen("cbg")){Q("cback").click();return true}
+ var ob=Q("obt");if(ob&&!ob.hidden){obHide();return true}
+ if(tab==="fixos"&&FXV==="plan"){FXV="lanc";render();Q("main").scrollTop=0;fabFade();return true}
+ if(tab!=="resumo"){var nb=document.querySelector('nav [data-t="resumo"]');if(nb){nb.click();return true}}
+ return false}
+(function(){try{if(window.Capacitor&&Capacitor.isPluginAvailable&&Capacitor.isPluginAvailable("App")){var A=Capacitor.Plugins.App;A.addListener("backButton",function(){if(!goBack()){try{A.minimizeApp()}catch(e){}}})}}catch(e){}})();
 function setThemeMode(m){document.documentElement.dataset.theme=m;try{localStorage.setItem("tema",m)}catch(e){}setTema()}
 var ON='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
 var OFF='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.9 17.9A10.9 10.9 0 0 1 12 19c-6.5 0-10-7-10-7a18 18 0 0 1 4.1-5.1M9.9 5.1A9.7 9.7 0 0 1 12 5c6.5 0 10 7 10 7a18 18 0 0 1-2.2 3.2M1 1l22 22"/></svg>';
