@@ -3,10 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7B1F2A">
+<style>html{background:#7B1F2A}</style>
 <script>try{if(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform())document.documentElement.classList.add("native")}catch(e){}</script>
 <title>Meu Bolso – Finanças</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <script>(function(){var t=null;try{t=localStorage.getItem("tema")}catch(e){}if(t!=="light"&&t!=="dark"){try{t=matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light"}catch(e){t="light"}}document.documentElement.setAttribute("data-theme",t)})()</script>
 <style>
 :root{--fs:1.12;color-scheme:light;--navy:#7B1F2A;--navy2:#9a3a47;--orange:#5C8C6D;--gold:#8FC4A1;--cream:#F5F3EF;--ink:#14141b;
@@ -1570,8 +1572,10 @@ natBg();natInsets();setTimeout(natInsets,600);
   $("spc").setAttribute("d",D);
  }
  window.SPR=R;
- R(0);T0=performance.now();
- (function f(n){var t=(n-T0)/1000;if(t>=DUR){R(DUR);fin();return}R(t);requestAnimationFrame(f)})(T0);
+ R(0);
+ var tv=0,last=0;
+ function f(n){if(!last){last=n;requestAnimationFrame(f);return}var dt=(n-last)/1000;last=n;tv+=Math.min(dt,1/30);if(tv>=DUR){R(DUR);fin();return}R(tv);requestAnimationFrame(f)}
+ requestAnimationFrame(function(){requestAnimationFrame(f)});
 })();
 addEventListener("resize",natInsets);document.addEventListener("visibilitychange",function(){if(!document.hidden)natInsets()});
 

@@ -50,7 +50,10 @@ public class MainActivity extends BridgeActivity {
         getWindow().setNavigationBarColor(Color.BLACK);
         // fundo preto: se algum pedaço da janela aparecer por trás do app (por ex.
         // enquanto o teclado desliza), ele continua o preto da barra inferior.
-        getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.BLACK));
+        // Na abertura tudo começa bordô (sem piscada clara); depois da animação
+        // o fundo da janela volta ao preto.
+        getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(BORDO));
+        try { getBridge().getWebView().setBackgroundColor(BORDO); } catch (Exception ignored) { }
         WindowInsetsControllerCompat wc = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
         wc.setAppearanceLightStatusBars(false);
         wc.setAppearanceLightNavigationBars(false);
@@ -66,7 +69,11 @@ public class MainActivity extends BridgeActivity {
         decor.addView(bottom, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, Gravity.BOTTOM));
 
         content = findViewById(android.R.id.content);
-        content.setBackgroundColor(Color.BLACK);
+        content.setBackgroundColor(BORDO);
+        content.postDelayed(() -> {
+            getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.BLACK));
+            content.setBackgroundColor(Color.BLACK);
+        }, 4500);
         ViewCompat.setOnApplyWindowInsetsListener(content, (v, w) -> {
             v.post(this::applyInsets);
             return WindowInsetsCompat.CONSUMED;
@@ -151,5 +158,63 @@ if ! grep -q "android.permission.CAMERA" "$MANIFEST"; then
   sed -i '0,/<application/s//<uses-permission android:name="android.permission.CAMERA" \/>\n    <uses-feature android:name="android.hardware.camera" android:required="false" \/>\n    <application/' "$MANIFEST"
 fi
 grep -q "android.permission.CAMERA" "$MANIFEST" || { echo "Não foi possível adicionar a permissão da câmera"; exit 1; }
+
+# Abertura sem piscada clara: a tela inicial do Android (inclusive a do Android 12+)
+# já nasce bordô, sem ícone, e emenda direto na animação da moedinha.
+RES="android/app/src/main/res"
+mkdir -p "$RES/values" "$RES/values-v31" "$RES/drawable"
+cat > "$RES/values/meubolso_cores.xml" <<'XML'
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="mb_bordo">#7B1F2A</color>
+</resources>
+XML
+cat > "$RES/drawable/splash_vazio.xml" <<'XML'
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@android:color/transparent" />
+    <size android:width="108dp" android:height="108dp" />
+</shape>
+XML
+cat > "$RES/values/styles.xml" <<'XML'
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="colorPrimary">@color/mb_bordo</item>
+        <item name="colorPrimaryDark">@color/mb_bordo</item>
+        <item name="colorAccent">@color/mb_bordo</item>
+    </style>
+    <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:background">@null</item>
+        <item name="android:windowBackground">@color/mb_bordo</item>
+        <item name="android:statusBarColor">@color/mb_bordo</item>
+    </style>
+    <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+        <item name="android:background">@color/mb_bordo</item>
+        <item name="android:windowBackground">@color/mb_bordo</item>
+        <item name="android:statusBarColor">@color/mb_bordo</item>
+        <item name="windowSplashScreenBackground">@color/mb_bordo</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_vazio</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
+    </style>
+</resources>
+XML
+cat > "$RES/values-v31/styles.xml" <<'XML'
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+        <item name="android:background">@color/mb_bordo</item>
+        <item name="android:windowBackground">@color/mb_bordo</item>
+        <item name="android:statusBarColor">@color/mb_bordo</item>
+        <item name="windowSplashScreenBackground">@color/mb_bordo</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_vazio</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
+        <item name="android:windowSplashScreenBackground">@color/mb_bordo</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_vazio</item>
+    </style>
+</resources>
+XML
 
 echo "Personalizações nativas aplicadas."
