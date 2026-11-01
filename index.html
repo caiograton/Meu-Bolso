@@ -494,7 +494,7 @@ document.getElementById("fs").onchange=function(){boxes();if(this.value==="__new
 Q("nsb").onclick=function(){var inc=type==="e",c=inc?"":Q("fc").value,i=Q("nsi"),n=i.value.trim();if(!n||(!inc&&!CATS[c]))return;
  if(LS(c).indexOf(n)>=0){i.value="";fillSub();Q("fs").value=n;boxes();return}
  askColor("s",n,QC.sc||(inc?COLINC:COL[c]),function(){addSub(c,n,QC.sc||(inc?COLINC:""));i.value="";QC.sc="";fillSub();Q("fs").value=n;boxes();render();refreshTags()})};
-var SCR={};document.querySelectorAll("nav button").forEach(function(b){b.onclick=function(){SCR[tab]=Q("main").scrollTop;tab=b.dataset.t;render();Q("main").scrollTop=SCR[tab]||0;fabFade();softFade();if(tab==="metas")qzNudge()}});
+var SCR={};document.querySelectorAll("nav button").forEach(function(b){b.onclick=function(){var same=tab===b.dataset.t;SCR[tab]=Q("main").scrollTop;tab=b.dataset.t;render();Q("main").scrollTop=same?(SCR[tab]||0):0;fabFade();softFade();if(tab==="metas")qzNudge()}});
 document.getElementById("main").onclick=function(e){
  var t=e.target.closest("[data-del],[data-rule],[data-m],[data-z],[data-edit],[data-goal],[data-aport],[data-newg],[data-bv],[data-bsave],[data-binc],[data-breset],[data-ex],[data-qz],[data-mo],[data-tg],[data-bi],[data-fxv],[data-plk]");if(!t)return;var d=t.dataset;if(d.fxv){FXV=d.fxv;render();Q("main").scrollTop=0;fabFade();return}if(d.plk){openPlan(d.plk);return}if(d.edit){openSheet(d.edit);return}
  if(d.ex){exOpen();return}
