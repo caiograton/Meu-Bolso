@@ -31,9 +31,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:maxLines="1"
+            android:letterSpacing="0.03"
             android:text="Meu Bolso"
-            android:textColor="#CCF5F3EF"
-            android:textSize="11sp" />
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/mb_value"
@@ -43,7 +45,7 @@
             android:maxLines="1"
             android:text="€ 18,50"
             android:textColor="#F5F3EF"
-            android:textSize="20sp"
+            android:textSize="19sp"
             android:textStyle="bold" />
 
         <TextView
