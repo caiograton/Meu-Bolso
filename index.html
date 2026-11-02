@@ -1853,6 +1853,22 @@ function imAib(pages){var out=[],cur="",pend=[],last=null,RE=/^(\d{1,2}) ([A-Za-
    var ds=(pend.concat(dline?[dline]:[])).join(" ").replace(/^(VDP|VDC|VDA)-/,"").replace(/\s+/g," ").trim();
    out.push({date:cur,desc:ds||"Lançamento",amt:amt,cur:"EUR",id:""});pend=[]})});
  return out}
+function imRevolut(pages){var out=[],cur="",RE=/^(\d{1,2}) ([A-Za-z]{3,9}) (\d{4})$/,AM=/^-?[€$£]?-?[\d,]+\.\d{2}$/,last=null;
+ pages.forEach(function(rows){var cols=null,inT=false;last=null;
+  rows.forEach(function(r){var t=r.t,items=r.a;
+   if(/^Date\s+Description\s+Money out/.test(t)){var c={};items.forEach(function(it){var k=it.s.trim();if(k==="Money out")c.out=it.x+it.w;else if(k==="Money in")c.inn=it.x+it.w;else if(k==="Balance")c.bal=it.x+it.w});if(c.out&&c.inn){cols=c;inT=true}return}
+   if(!inT)return;
+   if(/^Report lost or stolen card|^© \d{4} Revolut/.test(t)){inT=false;return}
+   var first=items[0],m=first&&first.x<100&&first.s.trim().match(RE),mo=m&&IMON[imNorm(m[2]).slice(0,3)];
+   var am=[],det=[];items.forEach(function(it){var s=it.s.trim();if(it.x>=cols.out-90&&AM.test(s))am.push({v:s.replace(/[€$£]/g,""),e:it.x+it.w});else if(!(m&&mo&&it===first))det.push(s)});
+   var dl=det.join(" ").replace(/\s+/g," ").trim();
+   if(m&&mo){cur=imMk(m[3],mo,m[1]).iso;last=null}
+   if(am.length&&cur&&(m&&mo||dl)){var o=null,i=null;am.forEach(function(a){var d1=Math.abs(a.e-cols.out),d2=Math.abs(a.e-cols.inn),d3=cols.bal?Math.abs(a.e-cols.bal):1e9;if(d1<=d2&&d1<=d3)o=a;else if(d2<d1&&d2<=d3)i=a});
+    var amt=o?-Math.abs(imNum(o.v)):i?Math.abs(imNum(i.v)):null;
+    if(amt!=null&&!isNaN(amt)){last={date:cur,desc:dl||"Lançamento",amt:amt,cur:"EUR",id:""};out.push(last)}return}
+   // continuation lines (Reference/From/To/Card…) are ignored
+  })});
+ return out}
 var IMMON={January:1,February:2,March:3,April:4,May:5,June:6,July:7,August:8,September:9,October:10,November:11,December:12};
 function imWise(lines){var AMT=/^\s*(\S.*?)\s{2,}(-?[\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s*$/,DT=/^\s*(January|February|March|April|May|June|July|August|September|October|November|December) (\d{1,2}), (\d{4}) \|(.*)$/,HD=/^(Card transaction|Received money|Sent money|Paid to|Converted|Wise |Interest|Fee|Refund|Cash|Direct|Incoming|Outgoing|[A-Z])/;
  var rows=[],cur=null,cu=((lines.join("\n").match(/\b([A-Z]{3}) [Ss]tatement\b/)||[])[1])||"";
@@ -1875,6 +1891,7 @@ function imDecode(buf){try{return new TextDecoder("utf-8",{fatal:true}).decode(b
 async function imRead(f){var nm=f.name||"",ext=(nm.split(".").pop()||"").toLowerCase(),buf=await f.arrayBuffer(),tx=null,label=nm.replace(/\.[^.]+$/,""),cur="",exp=false;
  if(ext==="pdf"||(new Uint8Array(buf,0,4).join()==="37,80,68,70")){var PG=await imPdfPages(buf),L=imPdfLines(PG),all=L.join("\n");
   if(/Wise|TransferWise/.test(all)&&/Transaction: /.test(all)){tx=imWise(L);cur=(all.match(/\b([A-Z]{3}) [Ss]tatement\b/)||[])[1]||"";label="Wise"+(cur?" "+cur:"")}
+  else if(/Revolut/.test(all)&&/Date\s+Description\s+Money out/.test(all)){tx=imRevolut(PG);cur=((all.match(/\b([A-Z]{3}) Statement\b/)||[])[1])||"EUR";label="Revolut "+cur;tx.forEach(function(x){x.cur=cur})}
   else if(/Allied Irish Banks/.test(all)&&/Date\s+Details\s+Debit/.test(all)){tx=imAib(PG);cur="EUR";label="AIB EUR"}
   else{tx=imGenericPdf(L);exp=true}}
  else if(ext==="xlsx"){tx=imTable(await imXlsx(buf))}
