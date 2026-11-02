@@ -1822,13 +1822,37 @@ async function imXlsx(buf){var z=await imZip(buf),sst=[],dp=new DOMParser();
    var t=c.getAttribute("t"),v=c.getElementsByTagName("v")[0],val="";
    if(t==="s"&&v)val=sst[Number(v.textContent)]||"";else if(t==="inlineStr")val=c.textContent;else if(v){val=v.textContent;if(t!=="str"&&t!=="e"&&val!==""&&!isNaN(Number(val)))val=Number(val)}
    row[ci]=val});for(var q2=0;q2<row.length;q2++)if(row[q2]===undefined)row[q2]="";rows.push(row)});return rows}
-async function imPdfLines(buf){var lib=await import("./pdf/pdf.min.js");lib.GlobalWorkerOptions.workerSrc="./pdf/pdf.worker.min.js";
- var doc=await lib.getDocument({data:new Uint8Array(buf)}).promise,lines=[];
+async function imPdfPages(buf){var lib=await import("./pdf/pdf.min.js");lib.GlobalWorkerOptions.workerSrc="./pdf/pdf.worker.min.js";
+ var doc=await lib.getDocument({data:new Uint8Array(buf)}).promise,pages=[];
  for(var p=1;p<=doc.numPages;p++){var pg=await doc.getPage(p),tc=await pg.getTextContent(),its=tc.items.filter(function(x){return x.str&&x.str.trim()!==""}).map(function(x){return{s:x.str,x:x.transform[4],y:x.transform[5],w:x.width||0}});
   its.sort(function(a,b){return Math.abs(a.y-b.y)>2.5?b.y-a.y:a.x-b.x});
   var rows=[];its.forEach(function(it){var r=rows[rows.length-1];if(r&&Math.abs(r.y-it.y)<=2.5)r.a.push(it);else rows.push({y:it.y,a:[it]})});
-  rows.forEach(function(r){r.a.sort(function(a,b){return a.x-b.x});var s="",pe=null;r.a.forEach(function(it){if(pe!=null){var g=it.x-pe;s+=g>14?"   ":g>1.2?" ":""}s+=it.s;pe=it.x+it.w});lines.push(s.replace(/\s+$/,""))})}
- return lines}
+  rows.forEach(function(r){r.a.sort(function(a,b){return a.x-b.x});var s="",pe=null;r.a.forEach(function(it){if(pe!=null){var g=it.x-pe;s+=g>14?"   ":g>1.2?" ":""}s+=it.s;pe=it.x+it.w});r.t=s.replace(/\s+$/,"")});
+  pages.push(rows)}
+ return pages}
+function imPdfLines(pages){var L=[];pages.forEach(function(rows){rows.forEach(function(r){L.push(r.t)})});return L}
+function imAib(pages){var out=[],cur="",pend=[],last=null,RE=/^(\d{1,2}) ([A-Za-z]{3}) (\d{4})\b\s*(.*)$/,AM=/^\d{1,3}(,\d{3})*\.\d{2}$|^\d+\.\d{2}$/;
+ pages.forEach(function(rows){var cols=null,inT=false;pend=[];
+  rows.forEach(function(r){var t=r.t;
+   if(/^Date\s+Details\s+Debit/.test(t)){var c={};r.a.forEach(function(it){var k=it.s.replace(/[^A-Za-z]/g,"");if(k==="Debit"||k==="Credit"||k==="Balance")c[k]=it.x+it.w});if(c.Debit&&c.Credit){cols=c;inT=true}return}
+   if(!inT)return;
+   if(/^For Important Information|^Overdrawn balances|^www\.aib\.ie|^Allied Irish Banks, p\.l\.c\. is regulated/.test(t)){inT=false;return}
+   var items=r.a,m=t.match(RE),mo=m&&IMON[imNorm(m[2]).slice(0,3)];
+   if(m&&mo){cur=imMk(m[3],mo,m[1]).iso;pend=[]}
+   var am=[],txt=[];
+   items.forEach(function(it){var s=it.s.trim();if(AM.test(s)&&it.x>cols.Debit-90)am.push({v:s,e:it.x+it.w});else if(!(m&&mo&&it===items[0])&&!(m&&mo&&IMON[imNorm(it.s).slice(0,3)]&&/^\d{4}$/.test(s)===false&&it.x<80))txt.push(s)});
+   var dtxt=(m&&mo?m[4]:t).replace(/\s{2,}.*$/,"");
+   // details = row text before the first amount
+   var det=[];items.forEach(function(it){var s=it.s.trim();if(AM.test(s)&&it.x>cols.Debit-90)return;det.push(it)});
+   var dline=det.map(function(it){return it.s}).join(" ").replace(/^\d{1,2} [A-Za-z]{3} \d{4}\s*/,"").replace(/\s+/g," ").trim();
+   if(/BALANCE (FORWARD|CARRIED)/i.test(dline)){pend=[];return}
+   if(!am.length){if(dline&&!/^IE\d{10,}$/.test(dline)&&!/^Interest Rate$|^Lending @ [\d.,]+%$/i.test(dline))pend.push(dline);return}
+   var dr=null,cr=null;am.forEach(function(a){var dd=Math.abs(a.e-cols.Debit),dc=Math.abs(a.e-cols.Credit),db=cols.Balance?Math.abs(a.e-cols.Balance):1e9;if(dd<=dc&&dd<=db)dr=a;else if(dc<dd&&dc<=db)cr=a});
+   var amt=null;if(dr)amt=-imNum(dr.v);else if(cr)amt=imNum(cr.v);
+   if(amt==null||!cur){return}
+   var ds=(pend.concat(dline?[dline]:[])).join(" ").replace(/^(VDP|VDC|VDA)-/,"").replace(/\s+/g," ").trim();
+   out.push({date:cur,desc:ds||"Lançamento",amt:amt,cur:"EUR",id:""});pend=[]})});
+ return out}
 var IMMON={January:1,February:2,March:3,April:4,May:5,June:6,July:7,August:8,September:9,October:10,November:11,December:12};
 function imWise(lines){var AMT=/^\s*(\S.*?)\s{2,}(-?[\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s*$/,DT=/^\s*(January|February|March|April|May|June|July|August|September|October|November|December) (\d{1,2}), (\d{4}) \|(.*)$/,HD=/^(Card transaction|Received money|Sent money|Paid to|Converted|Wise |Interest|Fee|Refund|Cash|Direct|Incoming|Outgoing|[A-Z])/;
  var rows=[],cur=null,cu=((lines.join("\n").match(/\b([A-Z]{3}) [Ss]tatement\b/)||[])[1])||"";
@@ -1849,8 +1873,9 @@ function imGenericPdf(lines){var out=[],mdy=false,AM="-?\\(?[\\d.,]+\\)?";
  lines.forEach(function(ln){var m=ln.match(RX);if(!m)return;var d=imDate(m[1],mdy),a=imNum(m[3]);if(!d||isNaN(a)||Math.abs(a)<0.005)return;if(!/[.,]\d{2}\)?$/.test(m[3].trim()))return;out.push({date:d.iso,desc:m[2].replace(/\s+/g," ").trim(),amt:a,cur:"",id:""})});return out}
 function imDecode(buf){try{return new TextDecoder("utf-8",{fatal:true}).decode(buf)}catch(e){return new TextDecoder("windows-1252").decode(buf)}}
 async function imRead(f){var nm=f.name||"",ext=(nm.split(".").pop()||"").toLowerCase(),buf=await f.arrayBuffer(),tx=null,label=nm.replace(/\.[^.]+$/,""),cur="",exp=false;
- if(ext==="pdf"||(new Uint8Array(buf,0,4).join()==="37,80,68,70")){var L=await imPdfLines(buf),all=L.join("\n");
+ if(ext==="pdf"||(new Uint8Array(buf,0,4).join()==="37,80,68,70")){var PG=await imPdfPages(buf),L=imPdfLines(PG),all=L.join("\n");
   if(/Wise|TransferWise/.test(all)&&/Transaction: /.test(all)){tx=imWise(L);cur=(all.match(/\b([A-Z]{3}) [Ss]tatement\b/)||[])[1]||"";label="Wise"+(cur?" "+cur:"")}
+  else if(/Allied Irish Banks/.test(all)&&/Date\s+Details\s+Debit/.test(all)){tx=imAib(PG);cur="EUR";label="AIB EUR"}
   else{tx=imGenericPdf(L);exp=true}}
  else if(ext==="xlsx"){tx=imTable(await imXlsx(buf))}
  else if(ext==="xls")throw"xls";
