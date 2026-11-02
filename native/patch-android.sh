@@ -5,6 +5,15 @@ set -euo pipefail
 PKG_DIR="android/app/src/main/java/com/caiograton/meubolso"
 test -d "$PKG_DIR" || { echo "Pasta $PKG_DIR não encontrada"; exit 1; }
 
+# Dados financeiros não vão para o backup automático do Android (nuvem/adb).
+MANIFEST="android/app/src/main/AndroidManifest.xml"
+if grep -q 'android:allowBackup=' "$MANIFEST"; then
+  sed -i 's/android:allowBackup="true"/android:allowBackup="false"/' "$MANIFEST"
+else
+  sed -i 's/<application/<application android:allowBackup="false"/' "$MANIFEST"
+fi
+grep -q 'android:allowBackup="false"' "$MANIFEST" || { echo "allowBackup não desativado"; exit 1; }
+
 cp native/DeviceLockPlugin.java "$PKG_DIR/DeviceLockPlugin.java"
 cp native/SafeAreaPlugin.java "$PKG_DIR/SafeAreaPlugin.java"
 cp native/InsetMath.java "$PKG_DIR/InsetMath.java"

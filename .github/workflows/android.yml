@@ -38,6 +38,9 @@ jobs:
       - name: Numerar a versão dentro do app
         run: sed -i "s/__APP_VERSION__/0.1.${{ github.run_number }}/g" www/index.html
 
+      - name: Política de segurança do app (CSP)
+        run: node native/add-csp.cjs www/index.html
+
       - name: Testar as contas de margens e teclado
         run: |
           mkdir -p /tmp/imt
