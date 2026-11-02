@@ -46,6 +46,9 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(SafeAreaPlugin.class);
         registerPlugin(QuickWidgetPlugin.class);
         super.onCreate(savedInstanceState);
+        if (getSharedPreferences("mb_sec", MODE_PRIVATE).getBoolean("secure", false)) {
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
+        }
         if (QuickWidgetPlugin.ACTION_QUICK.equals(getIntent().getAction())) {
             QuickWidgetPlugin.pending = true;
         }
@@ -243,8 +246,9 @@ cp native/widget/mb_widget_bg.xml "$RES/drawable/mb_widget_bg.xml"
 cp native/widget/mb_widget_btn.xml "$RES/drawable/mb_widget_btn.xml"
 cp native/widget/mb_widget_info.xml "$RES/xml/mb_widget_info.xml"
 cp native/widget/mb_widget_glyph.png "$RES/drawable-nodpi/mb_widget_glyph.png"
+cp native/widget/mb_widget_glyph_hide.png "$RES/drawable-nodpi/mb_widget_glyph_hide.png"
 if ! grep -q "QuickWidgetProvider" "$MANIFEST"; then
-  sed -i '0,/<\/application>/s//    <receiver android:name="com.caiograton.meubolso.QuickWidgetProvider" android:exported="true" android:label="Meu Bolso">\n            <intent-filter>\n                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" \/>\n            <\/intent-filter>\n            <meta-data android:name="android.appwidget.provider" android:resource="@xml\/mb_widget_info" \/>\n        <\/receiver>\n    <\/application>/' "$MANIFEST"
+  sed -i '0,/<\/application>/s//    <receiver android:name="com.caiograton.meubolso.QuickWidgetProvider" android:exported="true" android:label="Meu Bolso">\n            <intent-filter>\n                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" \/>\n                <action android:name="android.intent.action.DATE_CHANGED" \/>\n                <action android:name="android.intent.action.TIME_SET" \/>\n                <action android:name="android.intent.action.TIMEZONE_CHANGED" \/>\n            <\/intent-filter>\n            <meta-data android:name="android.appwidget.provider" android:resource="@xml\/mb_widget_info" \/>\n        <\/receiver>\n    <\/application>/' "$MANIFEST"
 fi
 grep -q "QuickWidgetProvider" "$MANIFEST" || { echo "Não foi possível registrar o widget"; exit 1; }
 

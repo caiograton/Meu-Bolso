@@ -30,6 +30,11 @@ jobs:
       - name: Preparar página do app
         run: npm run build:web
 
+      - name: Embutir a fonte no app (sem pedir nada ao Google)
+        run: |
+          node native/embed-font.cjs
+          if grep -q "fonts.googleapis.com" www/index.html; then echo "Ainda há link para o Google"; exit 1; fi
+
       - name: Numerar a versão dentro do app
         run: sed -i "s/__APP_VERSION__/0.1.${{ github.run_number }}/g" www/index.html
 

@@ -32,6 +32,7 @@ public class QuickWidgetPlugin extends Plugin {
         SharedPreferences.Editor e = c.getSharedPreferences(QuickWidgetProvider.PREFS, Context.MODE_PRIVATE).edit();
         e.putString("lang", call.getString("lang", "pt-BR"));
         e.putString("value", call.getString("value", ""));
+        e.putString("date", call.getString("date", ""));
         e.apply();
         QuickWidgetProvider.refreshAll(c);
         call.resolve();

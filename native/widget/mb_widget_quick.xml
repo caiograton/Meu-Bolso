@@ -12,6 +12,7 @@
     android:paddingBottom="6dp">
 
     <ImageView
+        android:id="@+id/mb_glyph"
         android:layout_width="46dp"
         android:layout_height="52dp"
         android:contentDescription="@null"

@@ -1,5 +1,6 @@
 package com.caiograton.meubolso;
 
+import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
@@ -8,20 +9,70 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.widget.RemoteViews;
+import java.util.Calendar;
+import java.util.Locale;
 
 /**
  * Widget "Lançamento rápido": barra bordô com o bolso e a moeda, o valor do
- * último lançamento e o botão que abre a tela rápida do app.
- * Os textos seguem o idioma escolhido dentro do app.
+ * último lançamento RÁPIDO (só se for de hoje ou de ontem) e o botão que abre a
+ * tela rápida do app. Tocar no bolsinho esconde/mostra o valor (estado próprio do
+ * widget, sem ligação com o olho do app). Os textos seguem o idioma do app.
+ * O widget se atualiza sozinho na virada do dia (DATE_CHANGED) e uma vez por dia.
  */
 public class QuickWidgetProvider extends AppWidgetProvider {
     static final String PREFS = "mb_widget";
+    static final String ACTION_TOGGLE = "com.caiograton.meubolso.WIDGET_TOGGLE";
 
     @Override
     public void onUpdate(Context context, AppWidgetManager manager, int[] ids) {
         for (int id : ids) {
             manager.updateAppWidget(id, build(context));
         }
+        scheduleMidnight(context);
+    }
+
+    @Override
+    public void onEnabled(Context context) {
+        scheduleMidnight(context);
+    }
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        String a = intent == null ? null : intent.getAction();
+        if (ACTION_TOGGLE.equals(a)) {
+            SharedPreferences sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+            sp.edit().putBoolean("hidden", !sp.getBoolean("hidden", false)).apply();
+            refreshAll(context);
+            return;
+        }
+        if (Intent.ACTION_DATE_CHANGED.equals(a) || Intent.ACTION_TIME_CHANGED.equals(a)
+                || Intent.ACTION_TIMEZONE_CHANGED.equals(a) || ACTION_MIDNIGHT.equals(a)) {
+            refreshAll(context);
+            scheduleMidnight(context);
+            return;
+        }
+        super.onReceive(context, intent);
+    }
+
+    static final String ACTION_MIDNIGHT = "com.caiograton.meubolso.WIDGET_MIDNIGHT";
+
+    /** Garante a atualização depois da meia-noite mesmo se o aviso de troca de data falhar. */
+    static void scheduleMidnight(Context context) {
+        try {
+            AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+            if (am == null) return;
+            Calendar c = Calendar.getInstance();
+            c.add(Calendar.DAY_OF_YEAR, 1);
+            c.set(Calendar.HOUR_OF_DAY, 0);
+            c.set(Calendar.MINUTE, 5);
+            c.set(Calendar.SECOND, 0);
+            c.set(Calendar.MILLISECOND, 0);
+            Intent i = new Intent(context, QuickWidgetProvider.class);
+            i.setAction(ACTION_MIDNIGHT);
+            PendingIntent pi = PendingIntent.getBroadcast(context, 7, i,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            am.set(AlarmManager.RTC, c.getTimeInMillis(), pi);
+        } catch (Exception ignored) { }
     }
 
     static void refreshAll(Context context) {
@@ -32,36 +83,62 @@ public class QuickWidgetProvider extends AppWidgetProvider {
         }
     }
 
+    static String iso(Calendar c) {
+        return String.format(Locale.US, "%04d-%02d-%02d", c.get(Calendar.YEAR), c.get(Calendar.MONTH) + 1, c.get(Calendar.DAY_OF_MONTH));
+    }
+
+    /** true se a data (aaaa-mm-dd) é hoje ou ontem, pelo relógio do aparelho. */
+    static boolean recent(String date) {
+        if (date == null || date.length() == 0) return false;
+        Calendar t = Calendar.getInstance();
+        if (iso(t).equals(date)) return true;
+        t.add(Calendar.DAY_OF_YEAR, -1);
+        return iso(t).equals(date);
+    }
+
     static RemoteViews build(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         String lang = prefs.getString("lang", "pt-BR");
         String value = prefs.getString("value", "");
+        String date = prefs.getString("date", "");
+        boolean hidden = prefs.getBoolean("hidden", false);
         String l = lang != null && lang.length() >= 2 ? lang.substring(0, 2).toLowerCase() : "pt";
 
         String sub;
+        String none;
         String label;
         if ("en".equals(l)) {
-            sub = "last entry";
+            sub = "last quick entry";
+            none = "No recent quick entry";
             label = "Quick\nentry";
         } else if ("es".equals(l)) {
-            sub = "último movimiento";
+            sub = "último movimiento rápido";
+            none = "Ningún movimiento rápido reciente";
             label = "Movimiento\nrápido";
         } else if ("ja".equals(l)) {
-            sub = "最後の入力";
+            sub = "最後のクイック入力";
+            none = "最近のクイック入力はありません";
             label = "クイック\n入力";
         } else {
-            sub = "último lançamento";
+            sub = "último lançamento rápido";
+            none = "Nenhum lançamento rápido recente";
             label = "Lançamento\nrápido";
         }
-        if (value == null || value.length() == 0) {
-            value = "—";
-        }
+        boolean has = value != null && value.length() > 0 && recent(date);
 
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.mb_widget_quick);
         views.setTextViewText(R.id.mb_title, "Meu Bolso");
-        views.setTextViewText(R.id.mb_value, value);
-        views.setTextViewText(R.id.mb_sub, sub);
         views.setTextViewText(R.id.mb_btn_label, label);
+        if (has) {
+            views.setViewVisibility(R.id.mb_value, android.view.View.VISIBLE);
+            views.setTextViewText(R.id.mb_value, hidden ? "\u2022\u2022\u2022\u2022\u2022" : value);
+            views.setTextViewText(R.id.mb_sub, sub);
+            views.setImageViewResource(R.id.mb_glyph, hidden ? R.drawable.mb_widget_glyph_hide : R.drawable.mb_widget_glyph);
+        } else {
+            views.setViewVisibility(R.id.mb_value, android.view.View.GONE);
+            views.setTextViewText(R.id.mb_sub, none);
+            views.setImageViewResource(R.id.mb_glyph, R.drawable.mb_widget_glyph);
+        }
 
         Intent intent = new Intent(context, MainActivity.class);
         intent.setAction(QuickWidgetPlugin.ACTION_QUICK);
@@ -70,6 +147,16 @@ public class QuickWidgetProvider extends AppWidgetProvider {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         views.setOnClickPendingIntent(R.id.mb_root, pi);
         views.setOnClickPendingIntent(R.id.mb_btn, pi);
+
+        if (has) {
+            Intent t = new Intent(context, QuickWidgetProvider.class);
+            t.setAction(ACTION_TOGGLE);
+            PendingIntent tp = PendingIntent.getBroadcast(context, 1, t,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            views.setOnClickPendingIntent(R.id.mb_glyph, tp);
+        } else {
+            views.setOnClickPendingIntent(R.id.mb_glyph, pi);
+        }
         return views;
     }
 }

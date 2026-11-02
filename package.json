@@ -16,6 +16,7 @@
   },
   "devDependencies": {
     "@capacitor/assets": "latest",
-    "@capacitor/cli": "latest"
+    "@capacitor/cli": "latest",
+    "@fontsource/bricolage-grotesque": "latest"
   }
 }

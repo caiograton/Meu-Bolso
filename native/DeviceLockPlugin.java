@@ -69,4 +69,31 @@ public class DeviceLockPlugin extends Plugin {
             }
         });
     }
+
+    /**
+     * Com o bloqueio do app ligado, esconde a prévia do app na lista de apps recentes e
+     * impede capturas e gravações de tela (FLAG_SECURE). A escolha fica guardada para
+     * valer já na próxima abertura, antes mesmo de a tela do app carregar.
+     */
+    @PluginMethod
+    public void setSecure(final PluginCall call) {
+        final boolean on = Boolean.TRUE.equals(call.getBoolean("on", false));
+        getContext().getSharedPreferences("mb_sec", android.content.Context.MODE_PRIVATE)
+            .edit().putBoolean("secure", on).apply();
+        final android.app.Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (on) {
+                        activity.getWindow().setFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE,
+                            android.view.WindowManager.LayoutParams.FLAG_SECURE);
+                    } else {
+                        activity.getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
+                    }
+                }
+            });
+        }
+        call.resolve();
+    }
 }
