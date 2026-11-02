@@ -1550,7 +1550,7 @@ async function bioEnroll(){if(nativeLock()){await Capacitor.Plugins.DeviceLock.a
 async function bioAuth(){if(nativeLock()){await Capacitor.Plugins.DeviceLock.authenticate({title:"Meu Bolso",subtitle:"Confirme sua identidade"});return true}await navigator.credentials.get({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),allowCredentials:[{type:"public-key",id:unb64(SEC.cred)}],userVerification:"required",timeout:60000}});return true}
 var LK={cb:null,fails:0,until:0,mode:"lock"},HID=0;
 function showLock(mode,cb){LK.mode=mode||"lock";LK.cb=cb||null;Q("lock").className="lockov on";Q("lktitle").textContent=LK.mode==="lock"?"App bloqueado":"Confirme sua identidade";Q("lkpw").style.display=hasPw()?"":"none";Q("lkbio").style.display=hasBio()?"":"none";Q("lkcancel").hidden=LK.mode==="lock";Q("lkin").value="";Q("lkmsg").textContent="";if(hasPw())setTimeout(function(){Q("lkin").focus()},60);else if(hasBio()&&LK.mode==="lock")setTimeout(function(){Q("lkbio").click()},300)}
-function unlocked(){Q("lock").className="lockov";var cb=LK.cb;LK.cb=null;LK.fails=0;if(cb)cb()}
+function unlocked(){Q("lock").className="lockov";var cb=LK.cb;LK.cb=null;LK.fails=0;if(cb)cb();if(window.QKWAIT){window.QKWAIT=false;try{qkLaunchGo()}catch(e){}}}
 function lkWait(){var n=Math.ceil((LK.until-Date.now())/1000);if(n<=0){Q("lkmsg").textContent="";return}Q("lkmsg").textContent="Muitas tentativas. Aguarde "+n+"s.";setTimeout(lkWait,1000)}
 async function lkTry(){if(Date.now()<LK.until){lkWait();return}var pw=Q("lkin").value;if(!pw)return;var h="";try{h=await hashPw(pw,SEC.salt)}catch(e){Q("lkmsg").textContent="Não foi possível verificar.";return}
  if(h===SEC.hash)unlocked();else{LK.fails++;Q("lkin").value="";if(LK.fails>=5){LK.until=Date.now()+30000;LK.fails=0;lkWait()}else Q("lkmsg").textContent="Senha incorreta."}}
@@ -1764,7 +1764,8 @@ function qkTick(now){if(!QK.open)return;var b=Q("qks"),c=Q("qkc"),g=Q("qkcg"),W=
  }
  c.style.transform="translate("+(x-R)+"px,"+(y-R)+"px)";c.style.visibility=hide?"hidden":"visible";g.setAttribute("transform","rotate("+(rot*57.3)+" 17 17)");
  QK.raf=requestAnimationFrame(qkTick)}
-function qkLaunch(){var p=qkP();if(!p)return;p.quickPending().then(function(r){if(!(r&&r.pending))return;if(window.splashSkip)window.splashSkip();var lk=Q("lock");if(lk&&lk.classList.contains("on"))return;qkOpen(true)}).catch(function(){})}
+function qkLaunch(){var p=qkP();if(!p)return;p.quickPending().then(function(r){if(!(r&&r.pending))return;if(window.splashSkip)window.splashSkip();var lk=Q("lock");if(lk&&lk.classList.contains("on")){window.QKWAIT=true;return}qkOpen(true)}).catch(function(){})}
+function qkLaunchGo(){if(window.splashSkip)window.splashSkip();qkOpen(true)}
 window.addEventListener("mbquick",qkLaunch);
 (function(){var p=qkP();if(p){qkLaunch();qkSync()}})();
 
