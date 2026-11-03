@@ -181,6 +181,12 @@ GRADLE="android/app/build.gradle"
 test -f "$GRADLE" || { echo "$GRADLE não encontrado"; exit 1; }
 sed -i '0,/^dependencies {/s//dependencies {\n    implementation "androidx.biometric:biometric:1.1.0"/' "$GRADLE"
 grep -q "androidx.biometric:biometric" "$GRADLE" || { echo "Não foi possível adicionar a dependência de biometria"; exit 1; }
+# Motor de voz do app (Vosk), usado só em aparelhos sem voz offline do Android.
+sed -i '0,/^dependencies {/s//dependencies {\n    implementation "com.alphacephei:vosk-android:0.3.75"/' "$GRADLE"
+grep -q "com.alphacephei:vosk-android" "$GRADLE" || { echo "Não foi possível adicionar o motor de voz"; exit 1; }
+# Só os processadores de celulares (deixa o app menor): arm64 e armeabi-v7a.
+sed -i '0,/defaultConfig {/s//defaultConfig {\n        ndk { abiFilters "arm64-v8a", "armeabi-v7a" }/' "$GRADLE"
+grep -q "abiFilters" "$GRADLE" || { echo "Não foi possível limitar os processadores"; exit 1; }
 
 MANIFEST="android/app/src/main/AndroidManifest.xml"
 if ! grep -q "USE_BIOMETRIC" "$MANIFEST"; then
