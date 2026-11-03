@@ -15,6 +15,7 @@ fi
 grep -q 'android:allowBackup="false"' "$MANIFEST" || { echo "allowBackup não desativado"; exit 1; }
 
 cp native/DeviceLockPlugin.java "$PKG_DIR/DeviceLockPlugin.java"
+cp native/VoiceEntryPlugin.java "$PKG_DIR/VoiceEntryPlugin.java"
 cp native/SafeAreaPlugin.java "$PKG_DIR/SafeAreaPlugin.java"
 cp native/InsetMath.java "$PKG_DIR/InsetMath.java"
 cp native/ImeTracker.java "$PKG_DIR/ImeTracker.java"
@@ -54,6 +55,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(DeviceLockPlugin.class);
         registerPlugin(SafeAreaPlugin.class);
         registerPlugin(QuickWidgetPlugin.class);
+        registerPlugin(VoiceEntryPlugin.class);
         super.onCreate(savedInstanceState);
         if (getSharedPreferences("mb_sec", MODE_PRIVATE).getBoolean("secure", false)) {
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
@@ -189,6 +191,12 @@ if ! grep -q "android.permission.CAMERA" "$MANIFEST"; then
   sed -i '0,/<application/s//<uses-permission android:name="android.permission.CAMERA" \/>\n    <uses-feature android:name="android.hardware.camera" android:required="false" \/>\n    <application/' "$MANIFEST"
 fi
 grep -q "android.permission.CAMERA" "$MANIFEST" || { echo "Não foi possível adicionar a permissão da câmera"; exit 1; }
+# Microfone, só para o lançamento por voz (reconhecimento no aparelho, sem internet).
+if ! grep -q "android.permission.RECORD_AUDIO" "$MANIFEST"; then
+  sed -i '0,/<application/s//<uses-permission android:name="android.permission.RECORD_AUDIO" \/>\n    <uses-feature android:name="android.hardware.microphone" android:required="false" \/>\n    <queries>\n        <intent>\n            <action android:name="android.speech.RecognitionService" \/>\n        <\/intent>\n    <\/queries>\n    <application/' "$MANIFEST"
+fi
+grep -q "android.permission.RECORD_AUDIO" "$MANIFEST" || { echo "Não foi possível adicionar a permissão do microfone"; exit 1; }
+grep -q "android.speech.RecognitionService" "$MANIFEST" || { echo "Não foi possível declarar o serviço de voz"; exit 1; }
 
 # Abertura sem piscada clara: a tela inicial do Android (inclusive a do Android 12+)
 # já nasce bordô, sem ícone, e emenda direto na animação da moedinha.
