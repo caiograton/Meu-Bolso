@@ -1,6 +1,6 @@
 // Acrescenta uma política de segurança (CSP) à página do app Android.
 // Só o app a recebe: bloqueia conexões, scripts, imagens e frames de qualquer endereço
-// que não seja o próprio app (e a cotação, em api.frankfurter.dev).
+// que não seja o próprio app (e as cotações: api.frankfurter.dev, data-api.binance.vision e fapi.binance.com).
 const fs = require("fs");
 const crypto = require("crypto");
 const f = process.argv[2] || "www/index.html";
@@ -23,7 +23,7 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self' data:",
-  "connect-src 'self' blob: data: https://api.frankfurter.dev",
+  "connect-src 'self' blob: data: https://api.frankfurter.dev https://data-api.binance.vision https://fapi.binance.com",
   "media-src 'none'",
   "object-src 'none'",
   "frame-src 'none'",
