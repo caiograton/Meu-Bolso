@@ -50,8 +50,13 @@ public class FileSavePlugin extends Plugin {
     }
 
     private void doSave(PluginCall call) {
-        String name = call.getString("name").replaceAll("[\\\\/:*?\"<>|]", "_");
+        String name = call.getString("name").replaceAll("[\\\\/:*?\"<>|\\p{Cntrl}]", "_").replaceAll("^\\.+", "_");
+        if (name.length() > 120) name = name.substring(name.length() - 120);
+        if (name.isEmpty()) name = "arquivo";
         String mime = call.getString("mime", "application/octet-stream");
+        if (!mime.matches("application/pdf|image/jpeg|image/png|text/csv|application/json|text/plain")) mime = "application/octet-stream";
+        String b64 = call.getString("data");
+        if (b64.length() > 60_000_000) { call.reject("args"); return; }
         try {
             byte[] bytes = Base64.decode(call.getString("data"), Base64.DEFAULT);
             JSObject o = new JSObject();
