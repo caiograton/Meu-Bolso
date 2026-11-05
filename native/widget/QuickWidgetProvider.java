@@ -119,6 +119,22 @@ public class QuickWidgetProvider extends AppWidgetProvider {
             sub = "最後のクイック入力";
             none = "最近のクイック入力はありません";
             label = "クイック\n入力";
+        } else if ("de".equals(l)) {
+            sub = "letzte Schnellbuchung";
+            none = "Keine aktuelle Schnellbuchung";
+            label = "Schnell-\nbuchung";
+        } else if ("fr".equals(l)) {
+            sub = "dernière saisie rapide";
+            none = "Aucune saisie rapide récente";
+            label = "Saisie\nrapide";
+        } else if ("pl".equals(l)) {
+            sub = "ostatni szybki wpis";
+            none = "Brak ostatnich szybkich wpisów";
+            label = "Szybki\nwpis";
+        } else if ("it".equals(l)) {
+            sub = "ultimo inserimento rapido";
+            none = "Nessun inserimento rapido recente";
+            label = "Inserimento\nrapido";
         } else {
             sub = "último lançamento rápido";
             none = "Nenhum lançamento rápido recente";
