@@ -2,6 +2,7 @@
   "appId": "com.caiograton.meubolso",
   "appName": "Sigillum",
   "webDir": "www",
-  "android": { "allowMixedContent": false },
-  "backgroundColor": "#7B1F2A"
+  "android": {
+    "allowMixedContent": false
+  }
 }

@@ -26,9 +26,32 @@ public class QuickWidgetProvider extends AppWidgetProvider {
     @Override
     public void onUpdate(Context context, AppWidgetManager manager, int[] ids) {
         for (int id : ids) {
-            manager.updateAppWidget(id, build(context));
+            manager.updateAppWidget(id, build(context, id));
         }
         scheduleMidnight(context);
+    }
+
+    @Override
+    public void onDeleted(Context context, int[] ids) {
+        SharedPreferences.Editor e = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit();
+        for (int id : ids) e.remove("bg_" + id);
+        e.apply();
+    }
+
+    /** Fundo escolhido para este widget: "light", "dark" ou "app" (segue o tema do app). */
+    static String mode(SharedPreferences sp, int id) {
+        String m = sp.getString("bg_" + id, null);
+        if (m == null) m = sp.getString("bg_default", "dark");
+        return m;
+    }
+
+    /** Tema atual do app (gravado pelo app); sem registro, o tema do celular. */
+    static boolean appDark(Context c, SharedPreferences sp) {
+        String t = sp.getString("theme", "");
+        if ("dark".equals(t)) return true;
+        if ("light".equals(t)) return false;
+        int night = c.getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        return night == android.content.res.Configuration.UI_MODE_NIGHT_YES;
     }
 
     @Override
@@ -79,7 +102,7 @@ public class QuickWidgetProvider extends AppWidgetProvider {
         AppWidgetManager manager = AppWidgetManager.getInstance(context);
         int[] ids = manager.getAppWidgetIds(new ComponentName(context, QuickWidgetProvider.class));
         for (int id : ids) {
-            manager.updateAppWidget(id, build(context));
+            manager.updateAppWidget(id, build(context, id));
         }
     }
 
@@ -96,7 +119,7 @@ public class QuickWidgetProvider extends AppWidgetProvider {
         return iso(t).equals(date);
     }
 
-    static RemoteViews build(Context context) {
+    static RemoteViews build(Context context, int widgetId) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         String lang = prefs.getString("lang", "pt-BR");
         String value = prefs.getString("value", "");
@@ -144,6 +167,12 @@ public class QuickWidgetProvider extends AppWidgetProvider {
 
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.mb_widget_quick);
         views.setTextViewText(R.id.mb_title, "Sigillum");
+        String bgm = mode(prefs, widgetId);
+        boolean light = "light".equals(bgm) || ("app".equals(bgm) && !appDark(context, prefs));
+        views.setInt(R.id.mb_root, "setBackgroundResource", light ? R.drawable.mb_widget_bg_light : R.drawable.mb_widget_bg);
+        views.setTextColor(R.id.mb_title, light ? 0xFF7B1F2A : 0xFFF5F3EF);
+        views.setTextColor(R.id.mb_value, light ? 0xFF1E1416 : 0xFFF5F3EF);
+        views.setTextColor(R.id.mb_sub, light ? 0xFF8A7F78 : 0xFFCDBFB8);
         views.setTextViewText(R.id.mb_btn_label, label);
         if (has) {
             views.setViewVisibility(R.id.mb_value, android.view.View.VISIBLE);

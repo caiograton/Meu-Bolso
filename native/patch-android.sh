@@ -22,6 +22,7 @@ cp native/InsetMath.java "$PKG_DIR/InsetMath.java"
 cp native/ImeTracker.java "$PKG_DIR/ImeTracker.java"
 cp native/widget/QuickWidgetPlugin.java "$PKG_DIR/QuickWidgetPlugin.java"
 cp native/widget/QuickWidgetProvider.java "$PKG_DIR/QuickWidgetProvider.java"
+cp native/widget/QuickWidgetConfigActivity.java "$PKG_DIR/QuickWidgetConfigActivity.java"
 
 cat > "$PKG_DIR/MainActivity.java" <<'JAVA'
 package com.caiograton.meubolso;
@@ -68,34 +69,33 @@ public class MainActivity extends BridgeActivity {
 
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-        getWindow().setStatusBarColor(BORDO);
-        getWindow().setNavigationBarColor(Color.BLACK);
-        // fundo preto: se algum pedaço da janela aparecer por trás do app (por ex.
-        // enquanto o teclado desliza), ele continua o preto da barra inferior.
-        // Na abertura tudo começa bordô (sem piscada clara); depois da animação
-        // o fundo da janela volta ao preto.
-        getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(BORDO));
-        try { getBridge().getWebView().setBackgroundColor(BORDO); } catch (Exception ignored) { }
+        // Abertura na cor do tema (pergaminho no claro, tinta no escuro): o tema
+        // escolhido no app fica guardado aqui no aparelho; sem escolha, segue o
+        // tema do celular. Nada de bordô antes da animação do selo.
+        final int open = openColor();
+        final boolean light = isLight(open);
+        getWindow().setStatusBarColor(open);
+        getWindow().setNavigationBarColor(open);
+        getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(open));
+        try { getBridge().getWebView().setBackgroundColor(open); } catch (Exception ignored) { }
         WindowInsetsControllerCompat wc = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
-        wc.setAppearanceLightStatusBars(false);
-        wc.setAppearanceLightNavigationBars(false);
+        wc.setAppearanceLightStatusBars(light);
+        wc.setAppearanceLightNavigationBars(light);
 
         // As faixas das barras do Android são pintadas aqui (bordô em cima,
         // preto embaixo) e o app fica sempre entre elas e acima do teclado.
         final FrameLayout decor = (FrameLayout) getWindow().getDecorView();
         top = new View(this);
-        top.setBackgroundColor(BORDO);
+        top.setBackgroundColor(open);
         bottom = new View(this);
-        bottom.setBackgroundColor(Color.BLACK);
+        bottom.setBackgroundColor(open);
         decor.addView(top, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, Gravity.TOP));
         decor.addView(bottom, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, Gravity.BOTTOM));
 
         content = findViewById(android.R.id.content);
-        content.setBackgroundColor(BORDO);
-        content.postDelayed(() -> {
-            getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.BLACK));
-            content.setBackgroundColor(Color.BLACK);
-        }, 4500);
+        content.setBackgroundColor(open);
+        // Plano B: se o app não avisar o fim da abertura, troca sozinho.
+        content.postDelayed(this::endSplash, 6000);
         ViewCompat.setOnApplyWindowInsetsListener(content, (v, w) -> {
             v.post(this::applyInsets);
             return WindowInsetsCompat.CONSUMED;
@@ -138,6 +138,39 @@ public class MainActivity extends BridgeActivity {
                         "window.dispatchEvent(new Event('mbquick'))", null));
             } catch (Exception ignored) { }
         }
+    }
+
+    private boolean splashEnded = false;
+
+    /** Cor da abertura: a última cor de fundo do app (gravada pelo SafeArea) ou o tema do celular. */
+    private int openColor() {
+        String c = getSharedPreferences("mb_ui", MODE_PRIVATE).getString("bg", null);
+        if (c != null) {
+            try { return Color.parseColor(c); } catch (Exception ignored) { }
+        }
+        int night = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        return night == android.content.res.Configuration.UI_MODE_NIGHT_YES ? 0xFF1E1416 : 0xFFF5F3EF;
+    }
+
+    private static boolean isLight(int c) {
+        return (Color.red(c) * 299 + Color.green(c) * 587 + Color.blue(c) * 114) / 1000 > 140;
+    }
+
+    /** Fim da animação do selo: barra de cima bordô (junto do cabeçalho) e de baixo preta. */
+    public void endSplash() {
+        runOnUiThread(() -> {
+            if (splashEnded) return;
+            splashEnded = true;
+            getWindow().setStatusBarColor(BORDO);
+            getWindow().setNavigationBarColor(Color.BLACK);
+            getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.BLACK));
+            if (top != null) top.setBackgroundColor(BORDO);
+            if (bottom != null) bottom.setBackgroundColor(Color.BLACK);
+            if (content != null) content.setBackgroundColor(Color.BLACK);
+            WindowInsetsControllerCompat c = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+            c.setAppearanceLightStatusBars(false);
+            c.setAppearanceLightNavigationBars(false);
+        });
     }
 
     private int screenHeight() {
@@ -275,6 +308,8 @@ XML
 mkdir -p "$RES/layout" "$RES/xml" "$RES/drawable-nodpi"
 cp native/widget/mb_widget_quick.xml "$RES/layout/mb_widget_quick.xml"
 cp native/widget/mb_widget_bg.xml "$RES/drawable/mb_widget_bg.xml"
+cp native/widget/mb_widget_bg_light.xml "$RES/drawable/mb_widget_bg_light.xml"
+cp native/widget/mb_wprev_light.png native/widget/mb_wprev_dark.png native/widget/mb_wprev_app.png "$RES/drawable-nodpi/"
 cp native/widget/mb_widget_btn.xml "$RES/drawable/mb_widget_btn.xml"
 cp native/widget/mb_widget_info.xml "$RES/xml/mb_widget_info.xml"
 cp native/widget/mb_widget_glyph.png "$RES/drawable-nodpi/mb_widget_glyph.png"
@@ -283,5 +318,10 @@ if ! grep -q "QuickWidgetProvider" "$MANIFEST"; then
   sed -i '0,/<\/application>/s//    <receiver android:name="com.caiograton.meubolso.QuickWidgetProvider" android:exported="true" android:label="Sigillum">\n            <intent-filter>\n                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" \/>\n                <action android:name="android.intent.action.DATE_CHANGED" \/>\n                <action android:name="android.intent.action.TIME_SET" \/>\n                <action android:name="android.intent.action.TIMEZONE_CHANGED" \/>\n            <\/intent-filter>\n            <meta-data android:name="android.appwidget.provider" android:resource="@xml\/mb_widget_info" \/>\n        <\/receiver>\n    <\/application>/' "$MANIFEST"
 fi
 grep -q "QuickWidgetProvider" "$MANIFEST" || { echo "Não foi possível registrar o widget"; exit 1; }
+# Tela de escolha do fundo do widget (abre ao adicionar e em "Configurar")
+if ! grep -q "QuickWidgetConfigActivity" "$MANIFEST"; then
+  sed -i '0,/<\/application>/s//    <activity android:name="com.caiograton.meubolso.QuickWidgetConfigActivity" android:exported="true" android:label="Sigillum" android:theme="@style\/AppTheme.NoActionBar">\n            <intent-filter>\n                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" \/>\n            <\/intent-filter>\n        <\/activity>\n    <\/application>/' "$MANIFEST"
+fi
+grep -q "QuickWidgetConfigActivity" "$MANIFEST" || { echo "Não foi possível registrar a tela do widget"; exit 1; }
 
 echo "Personalizações nativas aplicadas."

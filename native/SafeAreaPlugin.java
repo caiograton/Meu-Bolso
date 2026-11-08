@@ -64,10 +64,21 @@ public class SafeAreaPlugin extends Plugin {
             public void run() {
                 try {
                     getBridge().getWebView().setBackgroundColor(android.graphics.Color.parseColor(c));
+                    // guardada para a próxima abertura começar na cor certa
+                    android.content.SharedPreferences.Editor ed = getContext().getSharedPreferences("mb_ui", android.content.Context.MODE_PRIVATE).edit();
+                    if (call.getBoolean("follow", false)) ed.remove("bg"); else ed.putString("bg", c);
+                    ed.apply();
                 } catch (Exception ignored) {
                 }
                 call.resolve();
             }
         });
+    }
+
+    /** O app avisa que a animação de abertura terminou. */
+    @PluginMethod
+    public void splashDone(final PluginCall call) {
+        if (getActivity() instanceof MainActivity) ((MainActivity) getActivity()).endSplash();
+        call.resolve();
     }
 }

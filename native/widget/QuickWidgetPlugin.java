@@ -33,8 +33,32 @@ public class QuickWidgetPlugin extends Plugin {
         e.putString("lang", call.getString("lang", "pt-BR"));
         e.putString("value", call.getString("value", ""));
         e.putString("date", call.getString("date", ""));
+        String th = call.getString("theme", null);
+        if (th != null) e.putString("theme", th);
         e.apply();
         QuickWidgetProvider.refreshAll(c);
         call.resolve();
+    }
+
+    /** Fundo escolhido em Configurações › Lançamento rápido: vale para todos os widgets. */
+    @PluginMethod
+    public void setBg(PluginCall call) {
+        Context c = getContext();
+        String m = call.getString("mode", "dark");
+        if (!"light".equals(m) && !"app".equals(m)) m = "dark";
+        SharedPreferences sp = c.getSharedPreferences(QuickWidgetProvider.PREFS, Context.MODE_PRIVATE);
+        SharedPreferences.Editor e = sp.edit();
+        e.putString("bg_default", m);
+        for (String k : sp.getAll().keySet()) if (k.startsWith("bg_") && !"bg_default".equals(k)) e.remove(k);
+        e.apply();
+        QuickWidgetProvider.refreshAll(c);
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void getBg(PluginCall call) {
+        JSObject o = new JSObject();
+        o.put("mode", getContext().getSharedPreferences(QuickWidgetProvider.PREFS, Context.MODE_PRIVATE).getString("bg_default", "dark"));
+        call.resolve(o);
     }
 }
