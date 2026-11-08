@@ -73,6 +73,7 @@ public class MainActivity extends BridgeActivity {
         // escolhido no app fica guardado aqui no aparelho; sem escolha, segue o
         // tema do celular. Nada de bordô antes da animação do selo.
         final int open = openColor();
+        openCol = open;
         final boolean light = isLight(open);
         getWindow().setStatusBarColor(open);
         getWindow().setNavigationBarColor(open);
@@ -141,6 +142,7 @@ public class MainActivity extends BridgeActivity {
     }
 
     private boolean splashEnded = false;
+    private int openCol = 0xFFF5F3EF;
 
     /** Cor da abertura: a última cor de fundo do app (gravada pelo SafeArea) ou o tema do celular. */
     private int openColor() {
@@ -156,21 +158,51 @@ public class MainActivity extends BridgeActivity {
         return (Color.red(c) * 299 + Color.green(c) * 587 + Color.blue(c) * 114) / 1000 > 140;
     }
 
-    /** Fim da animação do selo: barra de cima bordô (junto do cabeçalho) e de baixo preta. */
-    public void endSplash() {
+    /** Fim da animação do selo: barra de cima vai para o bordô (junto do cabeçalho) e a de
+     *  baixo para o preto, num degradê de "ms" milissegundos, no mesmo ritmo em que o app
+     *  aparece por trás da abertura. */
+    public void endSplash() { endSplash(0); }
+
+    public void endSplash(final int ms) {
         runOnUiThread(() -> {
             if (splashEnded) return;
             splashEnded = true;
-            getWindow().setStatusBarColor(BORDO);
-            getWindow().setNavigationBarColor(Color.BLACK);
+            final int from = openCol;
+            final boolean wasLight = isLight(from);
+            final WindowInsetsControllerCompat c = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+            if (ms <= 0) {
+                paintBars(BORDO, Color.BLACK);
+                c.setAppearanceLightStatusBars(false);
+                c.setAppearanceLightNavigationBars(false);
+            } else {
+                final android.animation.ArgbEvaluator ev = new android.animation.ArgbEvaluator();
+                android.animation.ValueAnimator va = android.animation.ValueAnimator.ofFloat(0f, 1f);
+                va.setDuration(ms);
+                va.setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator());
+                va.addUpdateListener(an -> {
+                    float f = (float) an.getAnimatedValue();
+                    paintBars((int) ev.evaluate(f, from, BORDO), (int) ev.evaluate(f, from, Color.BLACK));
+                    if (wasLight && f >= 0.5f) {
+                        c.setAppearanceLightStatusBars(false);
+                        c.setAppearanceLightNavigationBars(false);
+                    }
+                });
+                va.start();
+                if (!wasLight) {
+                    c.setAppearanceLightStatusBars(false);
+                    c.setAppearanceLightNavigationBars(false);
+                }
+            }
             getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.BLACK));
-            if (top != null) top.setBackgroundColor(BORDO);
-            if (bottom != null) bottom.setBackgroundColor(Color.BLACK);
             if (content != null) content.setBackgroundColor(Color.BLACK);
-            WindowInsetsControllerCompat c = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
-            c.setAppearanceLightStatusBars(false);
-            c.setAppearanceLightNavigationBars(false);
         });
+    }
+
+    private void paintBars(int topColor, int bottomColor) {
+        getWindow().setStatusBarColor(topColor);
+        getWindow().setNavigationBarColor(bottomColor);
+        if (top != null) top.setBackgroundColor(topColor);
+        if (bottom != null) bottom.setBackgroundColor(bottomColor);
     }
 
     private int screenHeight() {

@@ -78,7 +78,7 @@ public class SafeAreaPlugin extends Plugin {
     /** O app avisa que a animação de abertura terminou. */
     @PluginMethod
     public void splashDone(final PluginCall call) {
-        if (getActivity() instanceof MainActivity) ((MainActivity) getActivity()).endSplash();
+        if (getActivity() instanceof MainActivity) ((MainActivity) getActivity()).endSplash(call.getInt("ms", 0));
         call.resolve();
     }
 }
