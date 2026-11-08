@@ -1,0 +1,11 @@
+Lora (lora-500.ttf, lora-600.ttf, lora-500i.ttf)
+
+Copyright 2011 The Lora Project Authors (https://github.com/cyrealtype/Lora-Cyrillic), with Reserved Font Name "Lora".
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license is available with a FAQ at: https://scripts.sil.org/OFL
+
+The files in this folder are static instances (weights 500 and 600, italic 500)
+of the Lora variable font, limited to Latin and Latin Extended characters and
+without hinting. They are used by Sigillum for headings, numbers and the PDF
+statement.

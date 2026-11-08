@@ -37,7 +37,7 @@ public class DeviceLockPlugin extends Plugin {
             call.reject("Atividade indisponível");
             return;
         }
-        final String title = call.getString("title", "Meu Bolso");
+        final String title = call.getString("title", "Sigillum");
         final String subtitle = call.getString("subtitle", "Confirme sua identidade");
         activity.runOnUiThread(new Runnable() {
             @Override

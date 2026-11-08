@@ -73,6 +73,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v0.1.${{ github.run_number }}
-          name: Meu Bolso 0.1.${{ github.run_number }}
+          name: Sigillum 0.1.${{ github.run_number }}
           body: APK de teste gerado automaticamente a partir do commit ${{ github.sha }}.
           files: android/app/build/outputs/apk/debug/app-debug.apk

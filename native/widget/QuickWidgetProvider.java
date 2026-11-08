@@ -143,7 +143,7 @@ public class QuickWidgetProvider extends AppWidgetProvider {
         boolean has = value != null && value.length() > 0 && recent(date);
 
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.mb_widget_quick);
-        views.setTextViewText(R.id.mb_title, "Meu Bolso");
+        views.setTextViewText(R.id.mb_title, "Sigillum");
         views.setTextViewText(R.id.mb_btn_label, label);
         if (has) {
             views.setViewVisibility(R.id.mb_value, android.view.View.VISIBLE);

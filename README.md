@@ -1,4 +1,4 @@
-# Meu Bolso
+# Sigillum
 
 App de finanças pessoais em um único arquivo HTML (`index.html`), publicado como artifact do Claude.
 

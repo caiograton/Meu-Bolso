@@ -204,14 +204,23 @@ fi
 grep -q "WRITE_EXTERNAL_STORAGE" "$MANIFEST" || { echo "Não foi possível adicionar a permissão de gravação"; exit 1; }
 grep -q "android.speech.RecognitionService" "$MANIFEST" || { echo "Não foi possível declarar o serviço de voz"; exit 1; }
 
-# Abertura sem piscada clara: a tela inicial do Android (inclusive a do Android 12+)
-# já nasce bordô, sem ícone, e emenda direto na animação da moedinha.
+# Abertura sem piscada: a tela inicial do Android (inclusive a do Android 12+)
+# já nasce na cor do pergaminho (ou tinta, no modo escuro), sem ícone, e emenda
+# direto na animação do selo.
 RES="android/app/src/main/res"
 mkdir -p "$RES/values" "$RES/values-v31" "$RES/drawable"
 cat > "$RES/values/meubolso_cores.xml" <<'XML'
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="mb_bordo">#7B1F2A</color>
+    <color name="mb_abertura">#F5F3EF</color>
+</resources>
+XML
+mkdir -p "$RES/values-night"
+cat > "$RES/values-night/sigillum_cores.xml" <<'XML'
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="mb_abertura">#1E1416</color>
 </resources>
 XML
 cat > "$RES/drawable/splash_vazio.xml" <<'XML'
@@ -233,14 +242,14 @@ cat > "$RES/values/styles.xml" <<'XML'
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
-        <item name="android:windowBackground">@color/mb_bordo</item>
+        <item name="android:windowBackground">@color/mb_abertura</item>
         <item name="android:statusBarColor">@color/mb_bordo</item>
     </style>
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-        <item name="android:background">@color/mb_bordo</item>
-        <item name="android:windowBackground">@color/mb_bordo</item>
+        <item name="android:background">@color/mb_abertura</item>
+        <item name="android:windowBackground">@color/mb_abertura</item>
         <item name="android:statusBarColor">@color/mb_bordo</item>
-        <item name="windowSplashScreenBackground">@color/mb_bordo</item>
+        <item name="windowSplashScreenBackground">@color/mb_abertura</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_vazio</item>
         <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>
@@ -250,13 +259,13 @@ cat > "$RES/values-v31/styles.xml" <<'XML'
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-        <item name="android:background">@color/mb_bordo</item>
-        <item name="android:windowBackground">@color/mb_bordo</item>
+        <item name="android:background">@color/mb_abertura</item>
+        <item name="android:windowBackground">@color/mb_abertura</item>
         <item name="android:statusBarColor">@color/mb_bordo</item>
-        <item name="windowSplashScreenBackground">@color/mb_bordo</item>
+        <item name="windowSplashScreenBackground">@color/mb_abertura</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_vazio</item>
         <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
-        <item name="android:windowSplashScreenBackground">@color/mb_bordo</item>
+        <item name="android:windowSplashScreenBackground">@color/mb_abertura</item>
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_vazio</item>
     </style>
 </resources>
@@ -271,7 +280,7 @@ cp native/widget/mb_widget_info.xml "$RES/xml/mb_widget_info.xml"
 cp native/widget/mb_widget_glyph.png "$RES/drawable-nodpi/mb_widget_glyph.png"
 cp native/widget/mb_widget_glyph_hide.png "$RES/drawable-nodpi/mb_widget_glyph_hide.png"
 if ! grep -q "QuickWidgetProvider" "$MANIFEST"; then
-  sed -i '0,/<\/application>/s//    <receiver android:name="com.caiograton.meubolso.QuickWidgetProvider" android:exported="true" android:label="Meu Bolso">\n            <intent-filter>\n                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" \/>\n                <action android:name="android.intent.action.DATE_CHANGED" \/>\n                <action android:name="android.intent.action.TIME_SET" \/>\n                <action android:name="android.intent.action.TIMEZONE_CHANGED" \/>\n            <\/intent-filter>\n            <meta-data android:name="android.appwidget.provider" android:resource="@xml\/mb_widget_info" \/>\n        <\/receiver>\n    <\/application>/' "$MANIFEST"
+  sed -i '0,/<\/application>/s//    <receiver android:name="com.caiograton.meubolso.QuickWidgetProvider" android:exported="true" android:label="Sigillum">\n            <intent-filter>\n                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" \/>\n                <action android:name="android.intent.action.DATE_CHANGED" \/>\n                <action android:name="android.intent.action.TIME_SET" \/>\n                <action android:name="android.intent.action.TIMEZONE_CHANGED" \/>\n            <\/intent-filter>\n            <meta-data android:name="android.appwidget.provider" android:resource="@xml\/mb_widget_info" \/>\n        <\/receiver>\n    <\/application>/' "$MANIFEST"
 fi
 grep -q "QuickWidgetProvider" "$MANIFEST" || { echo "Não foi possível registrar o widget"; exit 1; }
 

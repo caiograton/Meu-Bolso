@@ -13,8 +13,8 @@
 
     <ImageView
         android:id="@+id/mb_glyph"
-        android:layout_width="46dp"
-        android:layout_height="52dp"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
         android:contentDescription="@null"
         android:scaleType="fitCenter"
         android:src="@drawable/mb_widget_glyph" />
@@ -32,11 +32,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:maxLines="1"
-            android:letterSpacing="0.03"
-            android:text="Meu Bolso"
-            android:textColor="#FFFFFF"
-            android:textSize="15sp"
-            android:textStyle="bold" />
+            android:fontFamily="serif"
+            android:letterSpacing="0.02"
+            android:text="Sigillum"
+            android:textColor="#F5F3EF"
+            android:textSize="16sp" />
 
         <TextView
             android:id="@+id/mb_value"
@@ -55,7 +55,7 @@
             android:layout_height="wrap_content"
             android:maxLines="1"
             android:text="último lançamento"
-            android:textColor="#CCF5F3EF"
+            android:textColor="#CDBFB8"
             android:textSize="11sp" />
     </LinearLayout>
 
@@ -76,7 +76,7 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="6dp"
             android:text="+"
-            android:textColor="#B9800F"
+            android:textColor="#E0A92B"
             android:textSize="20sp"
             android:textStyle="bold" />
 
@@ -86,7 +86,7 @@
             android:layout_height="wrap_content"
             android:maxLines="2"
             android:text="Lançamento\nrápido"
-            android:textColor="#7B1F2A"
+            android:textColor="#FFFFFF"
             android:textSize="13sp"
             android:textStyle="bold" />
     </LinearLayout>
