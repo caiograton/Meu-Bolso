@@ -35,8 +35,15 @@ jobs:
           node native/embed-font.cjs
           if grep -q "fonts.googleapis.com" www/index.html; then echo "Ainda há link para o Google"; exit 1; fi
 
+      - name: Definir o número da versão (0.2.01 foi a primeira da série 0.2)
+        id: ver
+        run: |
+          V=$(printf "0.2.%02d" $(( ${{ github.run_number }} - 71 )))
+          echo "v=$V" >> "$GITHUB_OUTPUT"
+          echo "Versão: $V"
+
       - name: Numerar a versão dentro do app
-        run: sed -i "s/__APP_VERSION__/0.1.${{ github.run_number }}/g" www/index.html
+        run: sed -i "s/__APP_VERSION__/${{ steps.ver.outputs.v }}/g" www/index.html
 
       - name: Política de segurança do app (CSP)
         run: node native/add-csp.cjs www/index.html
@@ -72,7 +79,7 @@ jobs:
       - name: Publicar APK em uma versão (release)
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v0.1.${{ github.run_number }}
-          name: Sigillum 0.1.${{ github.run_number }}
+          tag_name: v${{ steps.ver.outputs.v }}
+          name: Sigillum ${{ steps.ver.outputs.v }}
           body: APK de teste gerado automaticamente a partir do commit ${{ github.sha }}.
           files: android/app/build/outputs/apk/debug/app-debug.apk
