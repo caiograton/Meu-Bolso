@@ -271,6 +271,7 @@ nav .tt{position:relative;display:inline-block}
 .qkst b{display:block;font-size:calc(14px*var(--fs))}.qkst small{display:block;color:var(--muted);font-size:calc(12.5px*var(--fs));line-height:1.35;margin-top:1px}
 .qkok{display:flex;gap:10px;align-items:center;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:8px;font-size:calc(13px*var(--fs));line-height:1.35}.qkok::before{content:"";width:9px;height:9px;border-radius:50%;background:#D4A017;flex:none}
 .qkgo{width:100%;margin-top:16px;padding:14px;border-radius:14px;background:var(--navy);color:#fff;font-weight:700;font-size:calc(15px*var(--fs))}
+.exvn{margin:6px 16px 0;font-size:calc(12px*var(--fs));line-height:1.45;color:var(--muted);text-align:center}
 </style>
 </head>
 <body>
@@ -358,7 +359,7 @@ nav .tt{position:relative;display:inline-block}
 <div class="info" id="cxmsg" style="color:var(--exp)"></div>
 <h2 class="cxh">Recebidos</h2><div id="cxin"></div><h2 class="cxh">Como usar o código</h2><div class="cxhow" id="cxhow"></div></div></div></div></div>
   <div class="sheet-bg" id="cxw"><div class="sheet cxs" role="dialog" aria-label="Lançamentos recebidos"><h3 id="cxwT">Recebido</h3><div class="cxb" id="cxwB"></div><div class="cxa"><button type="button" class="save gbtn" id="cxok">Lançar no meu app</button><button type="button" class="cancel" id="cxno">Agora não</button><button type="button" class="cxd" id="cxdel">Descartar</button></div></div></div>
-  <div class="exv" id="exv" hidden><div class="exvb"><button type="button" id="exvx" aria-label="Fechar">‹</button><b>Pré-visualização</b><span style="width:44px"></span></div><div class="exvs" id="exvs"></div><div class="exvm" id="exvm"></div><div class="exva"><button type="button" class="pri" id="exvp">Baixar PDF</button></div></div>
+  <div class="exv" id="exv" hidden><div class="exvb"><button type="button" id="exvx" aria-label="Fechar">‹</button><b>Pré-visualização</b><span style="width:44px"></span></div><div class="exvs" id="exvs"></div><div class="exvm" id="exvm"></div><div class="exvn">Este PDF é só para leitura: não contém programas e não precisa instalar nada. Abra no Sigillum apenas arquivos que você gerou ou recebeu de alguém conhecido.</div><div class="exva"><button type="button" class="pri" id="exvp">Baixar PDF</button></div></div>
   <div class="sheet-bg" id="gbg"><div class="sheet" role="dialog" aria-label="Meta de economia"><h3 id="gT">Nova meta</h3>
       <label for="gn">Nome da meta</label><input id="gn" type="text" maxlength="30" placeholder="Ex.: Viagem, Reserva de emergência">
       <label for="gt">Valor da meta (<span class="mo">€</span>)</label><input id="gt" type="text" inputmode="numeric" placeholder="0,00" autocomplete="off">
@@ -1489,9 +1490,9 @@ function xTxt(s,x,y,sz,bold,col,al,mw,o){s=xClean(s);if(mw)s=xFit(s,sz,bold,mw,o
  else{X.need=true;return w}
  X.o.push(op);return w}
 function xLayout(mo,rows,code,full,gen){X.o=[];X.shd={};X.shk={};X.shn=0;Object.keys(LF).forEach(function(k){LF[k].used={}});
- var pages=[],y=0,sym=moeda,TW=XPW-2*XM,bal=0,tab=false,n,zi=0,BOT=790;
+ var pages=[],y=0,sym=moeda,TW=XPW-2*XM,bal=0,tab=false,n,zi=0,BOT=748;
  var CX=[XM+8,XM+75,XM+225,XPW-XM-93,XPW-XM-8],cap={tc:1.6},L5={f:"l5"},L6={f:"l6"};
- function np(first){X.o=[];pages.push(X.o);xRect(0,0,XPW,XPH,XC.pg);xSealV(172.5,330,250,{wm:1});
+ function np(first){X.o=[];pages.push(X.o);xRect(0,0,XPW,XPH,XC.pg);xSealV(172.5,300,250,{wm:1});X.o.push("q /GW gs");xTxt(TT("Selado pelo Sigillum"),XPW/2,588,30,false,"#5A4F4C","c",null,{f:"li"});X.o.push("Q");
   if(first){xWave(104,35/34);xSealV(38,21,66,{sh:1});xTxt("Sigillum",113,57,32,false,"#F5F3EF",null,null,L5);
    xTxt(TT("Extrato de lançamentos").toUpperCase(),114,75,8,false,"#EAD9DC",null,300,{tc:2.5});
    xTxt(TT("Gerado em"),XPW-XM,47,8,false,"#EAD9DC","r");xTxt(exFmt(gen),XPW-XM,62,11,false,"#F5F3EF","r",null,L5);y=160}
@@ -1521,21 +1522,14 @@ function xLayout(mo,rows,code,full,gen){X.o=[];X.shd={};X.shk={};X.shn=0;Object.
    xTxt(exFmt(r.date),CX[0],ty,8.75,false,XC.ink);if(cat!=="—")xCirc(CX[1]+10.75,y+10.2,2.75,dc);xTxt(cat,CX[1]+18,ty,8.75,true,XC.ink,"l",170);xTxt(sub,CX[2]+8,ty,8.75,false,sub==="—"?XC.mut:XC.ink,"l",130);
    xTxt((inc?"+ ":"- ")+nf.format(r.val),CX[3],ty,8.75,true,inc?"#3F6B4F":"#8C2433","r");var bb=Math.round(bal*100)/100;xTxt(bb<0?"-"+nf.format(-bb):nf.format(bb),CX[4],ty,8.75,false,XC.ink,"r");
    xLine(XM,y+20,XPW-XM,y+20,"#EAE3D8",.5);y+=20});
-  need(96);y+=16;var P1=xRRD(XM,y,TW,30,7);X.o.push("q "+P1+" 1 1 1 rg f Q","q "+P1+" "+xHx("#EAE3D8")+" RG .6 w S Q");
-  xTxt(TT("Total do período"),XM+12,y+19,9.5,true,XC.ink);xTxt(mo.type==="s"?"—":"+ "+nf.format(mo.e),XPW-XM-112,y+19,9.5,true,"#3F6B4F","r");xTxt(mo.type==="e"?"—":"- "+nf.format(mo.s),XPW-XM-12,y+19,9.5,true,"#8C2433","r");y+=38;
-  X.o.push("q "+xRRD(XM,y,TW,38,7)+" "+xHx(XC.mar)+" rg f Q");X.o.push("q "+xRRD(XM,y,TW,38,7)+" W n "+xHx("#C9A55A")+" rg "+xN(XM)+" "+xN(XPH-y-38)+" "+xN(TW)+" 1 re f Q");
-  xTxt(TF("Saldo final em {d}",{d:exFmt(mo.to)}),XM+14,y+23,11,true,"#F5F3EF","l",TW-200);var fb=Math.round(bal*100)/100;xTxt(fb<0?"-"+nf.format(-fb):nf.format(fb),XPW-XM-14,y+26,19,false,"#FFFFFF","r",null,L6);y+=58;
-  var sw=xWrap(TT("Gerado neste aparelho e assinado duas vezes (app + aparelho). Abra no Sigillum para conferir e importar os lançamentos com as categorias."),8,false,TW-150),ah=Math.max(118,64+sw.length*12.4+18);
-  need(ah+40);xRR(XM,y,TW,ah,10,"#FFFDF9","#D7CCBC",.75,"3 2");xSealV(XM+15,y+(ah-88)/2,88,{rot:9,sh:1});
-  var tx=XM+122;xTxt(TT("Selado pelo Sigillum"),tx,y+38,17,false,"#7B1F2A","l",TW-134,{f:"li"});xTxt(TF("CÓDIGO DO SELO {c}",{c:code}),tx,y+56,9,true,XC.ink,"l",TW-134,{tc:1.5});
-  sw.forEach(function(ln,k){xTxt(ln,tx,y+74+k*12.4,8,false,"#6B5E58")});y+=ah+14;
-  var nt=xWrap(TT("Este PDF é só para leitura: não contém programas e não precisa instalar nada. Abra no Sigillum apenas arquivos que você gerou ou recebeu de alguém conhecido."),7,false,TW);need(nt.length*11+6);nt.forEach(function(ln,k){xTxt(ln,XM,y+8+k*11,7,false,XC.mut)});y+=nt.length*11+6}
+  y+=8}
  else{need(60);xTxt(TT("Nenhum lançamento neste período."),XPW/2,y+30,12,false,XC.mut,"c")}
  n=pages.length;
- pages.forEach(function(p,i){X.o=p;xLine(XM,797,XPW-XM,797,"#E3DACD",.5);xSealV(XM-1,804,14);
-  var ft=TF("Selado pelo Sigillum · selo {c}",{c:code}),k=ft.indexOf("Sigillum"),fx=XM+18;
-  if(k>=0){fx+=xTxt(ft.slice(0,k),fx,814,7,false,XC.mut);fx+=xTxt("Sigillum",fx,814,7.5,false,XC.mar,null,null,L6);xTxt(ft.slice(k+8),fx,814,7,false,XC.mut)}else xTxt(ft,fx,814,7,false,XC.mut);
-  xTxt(TF("Página {a} de {b}",{a:i+1,b:n}),XPW-XM,815,7,false,XC.mut,"r")});
+ var fm=xWrap(TT("Gerado neste aparelho e assinado duas vezes (app + aparelho). Abra no Sigillum para conferir e importar os lançamentos com as categorias."),6.4,false,TW-130);
+ pages.forEach(function(p,i){X.o=p;xLine(XM,758,XPW-XM,758,"#E3DACD",.5);xSealV(XM-2,765,38,{sh:1});var fx=XM+46;
+  xTxt(TT("Selado pelo Sigillum"),fx,779,11.5,false,"#7B1F2A","l",TW-130,{f:"li"});xTxt(TF("CÓDIGO DO SELO {c}",{c:code}),fx,790,6.6,true,XC.ink,"l",TW-130,{tc:1.2});
+  fm.slice(0,3).forEach(function(ln,k){xTxt(ln,fx,800+k*8.2,6.4,false,XC.mut)});
+  xTxt(TF("Página {a} de {b}",{a:i+1,b:n}),XPW-XM,779,7,false,XC.mut,"r")});
  return{pages:pages.map(function(p){return p.join("\n")}),n:n,fin:Math.round(bal*100)/100}}
 function xWrap(s,sz,bold,mw){var sp=/\s/.test(s),parts=sp?s.split(/\s+/):Array.from(s),out=[],cur="";parts.forEach(function(w){var t=cur?(sp?cur+" "+w:cur+w):w;if(cur&&xTW(t,sz,bold)>mw){out.push(cur);cur=w}else cur=t});if(cur)out.push(cur);return out}
 function xTypeTxt(t){return TT(t==="e"?"Somente entradas":t==="s"?"Somente saídas":"Entradas e saídas")}
