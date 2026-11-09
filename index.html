@@ -385,7 +385,7 @@ nav .tt{position:relative;display:inline-block}
       <div id="fcwrap"><label>Categoria</label><select id="fc" hidden></select><div class="obar" id="bfc" role="button" tabindex="0" aria-expanded="false"><span id="bvfc"></span><span class="chev">▾</span></div><div class="olist ocard ofl" id="ofc" hidden></div></div>
       <label>Subcategoria</label><select id="fs" hidden></select><div class="obar" id="bfs" role="button" tabindex="0" aria-expanded="false"><span id="bvfs"></span><span class="chev">▾</span></div><div class="olist ocard ofl" id="ofs" hidden></div><div class="nbox" id="nsBox" hidden><input id="nsi" type="text" placeholder="Nome da nova subcategoria" maxlength="30"><button id="nsb" type="button">Adicionar</button><div class="tgsw" id="nssw"></div></div>
       <label for="fn">Observação</label><input id="fn" type="text" placeholder="Ex.: Compras da semana"><p class="info" id="fixnote" hidden>Alterar a data muda o dia em que ele se repete todo mês. Desmarcar "Repetir" transforma em um lançamento só deste mês.</p>
-      <div id="gbox" hidden><label for="fg">Vincular a uma meta (opcional)</label><select id="fg"></select></div>
+      <div id="gbox" hidden><label>Vincular a uma meta (opcional)</label><select id="fg" hidden></select><div class="obar" id="bfg" role="button" tabindex="0" aria-expanded="false"><span id="bvfg"></span><span class="chev">▾</span></div><div class="olist ocard ofl" id="ofg" hidden></div></div>
       <div class="chk"><input id="ff" type="checkbox"><label for="ff" style="margin:0;color:inherit">Repetir todo mês (lançamento fixo)</label></div><div id="fpw" hidden><label>Cobrança</label><div class="seg s4" id="fper"><button type="button" data-fp="m">Mensal</button><button type="button" data-fp="t">Trimestral</button><button type="button" data-fp="s">Semestral</button><button type="button" data-fp="a">Anual</button></div></div>
       <button class="save" id="save">Salvar lançamento</button>
       <button class="cancel" id="delb" hidden style="color:var(--exp)">Excluir lançamento</button>
@@ -521,8 +521,8 @@ function fillSub(){
  var c=document.getElementById("fc").value;
  document.getElementById("fs").innerHTML='<option value="">Nenhuma</option>'+(type==="e"?INC:(CATS[c]||[])).map(function(s){return'<option value="'+esc(s)+'">'+esc(s)+'</option>'}).join("")+(type==="e"||CATS[c]?'<option value="__new">+ Nova subcategoria</option>':'');
 }
-function ofRef(){["fc","fs","fcu"].forEach(function(k){var sl=Q(k),l=Q("o"+k),v=sl.value;l.innerHTML=[].map.call(sl.options,function(o){return'<button type="button" class="orow'+(o.value===v?" on":"")+'" data-v="'+esc(o.value)+'">'+esc(o.text)+'</button>'}).join("");l.hidden=true;Q("b"+k).setAttribute("aria-expanded","false");var op=[].filter.call(sl.options,function(o){return o.value===v})[0];Q("bv"+k).textContent=op?op.text:""})}
-["fc","fs","fcu"].forEach(function(k){Q("b"+k).onclick=function(){var l=Q("o"+k),h=!l.hidden;["fc","fs","fcu"].forEach(function(j){Q("o"+j).hidden=true;Q("b"+j).setAttribute("aria-expanded","false")});l.hidden=h;this.setAttribute("aria-expanded",String(!h))};
+function ofRef(){["fc","fs","fcu","fg"].forEach(function(k){var sl=Q(k),l=Q("o"+k),v=sl.value,tr=function(t){return k==="fg"?TT(t):t};l.innerHTML=[].map.call(sl.options,function(o){return'<button type="button" class="orow'+(o.value===v?" on":"")+'" data-v="'+esc(o.value)+'">'+esc(tr(o.text))+'</button>'}).join("");l.hidden=true;Q("b"+k).setAttribute("aria-expanded","false");var op=[].filter.call(sl.options,function(o){return o.value===v})[0];Q("bv"+k).textContent=op?tr(op.text):""})}
+["fc","fs","fcu","fg"].forEach(function(k){Q("b"+k).onclick=function(){var l=Q("o"+k),h=!l.hidden;["fc","fs","fcu","fg"].forEach(function(j){Q("o"+j).hidden=true;Q("b"+j).setAttribute("aria-expanded","false")});l.hidden=h;this.setAttribute("aria-expanded",String(!h))};
  Q("b"+k).onkeydown=function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();this.click()}};
  Q("o"+k).onclick=function(e){var b=e.target.closest("[data-v]");if(!b)return;var sl=Q(k);sl.value=b.dataset.v;if(sl.onchange)sl.onchange();ofRef()}});
 function setType(t){type=t;document.getElementById("tS").className=t==="s"?"on s":"";document.getElementById("tE").className=t==="e"?"on":"";document.getElementById("fc").value="";Q("fcwrap").hidden=t==="e";fillSub();boxes()}
@@ -581,7 +581,7 @@ Q("gsave").onclick=function(){
  Q("gbg").classList.remove("open");fillCats();render();
 };
 Q("gdel").onclick=function(){goals=goals.filter(function(x){return x.id!==editG});Q("gbg").classList.remove("open");render()};
-function aportar(id){var g=goals.filter(function(x){return String(x.id)===String(id)})[0];if(!g)return;openSheet();setType("s");Q("fc").value="Metas";fillSub();Q("fs").value=g.name;boxes();Q("fn").value="Guardado para "+g.name;Q("fg").value=g.id}
+function aportar(id){var g=goals.filter(function(x){return String(x.id)===String(id)})[0];if(!g)return;openSheet();setType("s");Q("fc").value="Metas";fillSub();Q("fs").value=g.name;boxes();Q("fn").value="Guardado para "+g.name;Q("fg").value=g.id;ofRef()}
 function GL(){return Q("fg").value?Number(Q("fg").value):null}
 function dec(){return DEC!=null?DEC:nf.resolvedOptions().maximumFractionDigits}
 function fmtNum(n){var d=dec();return new Intl.NumberFormat(LOC,{minimumFractionDigits:d,maximumFractionDigits:d}).format(n)}
@@ -593,7 +593,7 @@ Q("fd").onchange=syncDateText;
 Q("fdt").oninput=function(){var d=this.value.replace(/\D/g,"").slice(0,8),o=d,iso="";if(d.length>4)o=d.slice(0,2)+"/"+d.slice(2,4)+"/"+d.slice(4);else if(d.length>2)o=d.slice(0,2)+"/"+d.slice(2);this.value=o;
  if(d.length===8){var dd=+d.slice(0,2),mm=+d.slice(2,4),yy=+d.slice(4),t=new Date(yy,mm-1,dd);if(yy>=1900&&t.getMonth()===mm-1&&t.getDate()===dd)iso=d.slice(4)+"-"+d.slice(2,4)+"-"+d.slice(0,2)}
  Q("fd").value=iso;this.style.borderColor=d.length===8&&!iso?"var(--exp)":"";if(iso)arSoon()};
-function fillGoalSel(){Q("fg").innerHTML='<option value="">Nenhuma</option>'+goals.map(function(g){return'<option value="'+g.id+'">'+esc(g.name)+'</option>'}).join("");Q("gbox").hidden=!goals.length}
+function fillGoalSel(){Q("fg").innerHTML='<option value="">Nenhuma</option>'+goals.map(function(g){return'<option value="'+g.id+'">'+esc(g.name)+'</option>'}).join("");Q("gbox").hidden=!goals.length;ofRef()}
 Q("fg").onchange=function(){var g=goals.filter(function(x){return String(x.id)===Q("fg").value})[0];if(g&&type!=="e"){Q("fc").value="Metas";fillSub();Q("fs").value=g.name;boxes()}};
 Q("moeda").onchange=function(){moeda=this.value;try{localStorage.setItem("moeda",moeda)}catch(e){}nf=new Intl.NumberFormat(LOC,{style:"currency",currency:moeda});document.querySelectorAll(".mo").forEach(function(el){el.textContent=SYM()});render()};
 function Q(x){return document.getElementById(x)}
