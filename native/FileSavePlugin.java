@@ -2,7 +2,9 @@ package com.caiograton.meubolso;
 
 import android.Manifest;
 import android.content.ContentResolver;
+import android.content.ActivityNotFoundException;
 import android.content.ContentValues;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -77,6 +79,7 @@ public class FileSavePlugin extends Plugin {
                 done.put(MediaStore.MediaColumns.IS_PENDING, 0);
                 cr.update(uri, done, null, null);
                 o.put("uri", uri.toString());
+                o.put("open", true);
             } else {
                 File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
                 if (!dir.exists()) dir.mkdirs();
@@ -88,6 +91,27 @@ public class FileSavePlugin extends Plugin {
             }
             o.put("name", name);
             call.resolve(o);
+        } catch (Exception e) {
+            call.reject("fail");
+        }
+    }
+
+    /** Abre no leitor de PDF um arquivo que este app acabou de salvar em Downloads (Android 10 ou mais novo). */
+    @PluginMethod
+    public void open(PluginCall call) {
+        String u = call.getString("uri");
+        if (u == null || Build.VERSION.SDK_INT < 29 || !u.startsWith(MediaStore.Downloads.EXTERNAL_CONTENT_URI.toString())) {
+            call.reject("args");
+            return;
+        }
+        try {
+            Intent i = new Intent(Intent.ACTION_VIEW);
+            i.setDataAndType(Uri.parse(u), "application/pdf");
+            i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+            getContext().startActivity(i);
+            call.resolve();
+        } catch (ActivityNotFoundException e) {
+            call.reject("noapp");
         } catch (Exception e) {
             call.reject("fail");
         }
