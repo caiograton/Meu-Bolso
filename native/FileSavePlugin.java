@@ -67,7 +67,7 @@ public class FileSavePlugin extends Plugin {
                 ContentValues v = new ContentValues();
                 v.put(MediaStore.MediaColumns.DISPLAY_NAME, name);
                 v.put(MediaStore.MediaColumns.MIME_TYPE, mime);
-                v.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+                v.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + ("sigillum".equals(call.getString("sub", "")) ? "/Sigillum" : ""));
                 v.put(MediaStore.MediaColumns.IS_PENDING, 1);
                 Uri uri = cr.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, v);
                 if (uri == null) { call.reject("fail"); return; }
@@ -82,6 +82,7 @@ public class FileSavePlugin extends Plugin {
                 o.put("open", true);
             } else {
                 File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                if ("sigillum".equals(call.getString("sub", ""))) dir = new File(dir, "Sigillum");
                 if (!dir.exists()) dir.mkdirs();
                 File f = new File(dir, name);
                 try (FileOutputStream out = new FileOutputStream(f)) {
@@ -112,6 +113,27 @@ public class FileSavePlugin extends Plugin {
             call.resolve();
         } catch (ActivityNotFoundException e) {
             call.reject("noapp");
+        } catch (Exception e) {
+            call.reject("fail");
+        }
+    }
+
+    /** Apaga um arquivo que este app salvou em Downloads (usado para manter só os últimos backups automáticos). */
+    @PluginMethod
+    public void remove(PluginCall call) {
+        String u = call.getString("uri");
+        if (u == null) { call.reject("args"); return; }
+        try {
+            if (Build.VERSION.SDK_INT >= 29) {
+                if (!u.startsWith(MediaStore.Downloads.EXTERNAL_CONTENT_URI.toString())) { call.reject("args"); return; }
+                getContext().getContentResolver().delete(Uri.parse(u), null, null);
+            } else {
+                File f = new File(u);
+                File dl = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                if (!f.getCanonicalPath().startsWith(dl.getCanonicalPath())) { call.reject("args"); return; }
+                f.delete();
+            }
+            call.resolve();
         } catch (Exception e) {
             call.reject("fail");
         }

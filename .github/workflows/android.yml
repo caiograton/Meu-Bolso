@@ -43,7 +43,7 @@ jobs:
           echo "Versão: $V"
 
       - name: Numerar a versão dentro do app
-        run: sed -i "s/__APP_VERSION__/${{ steps.ver.outputs.v }}/g" www/index.html
+        run: sed -i -e "s/__APP_VERSION__/${{ steps.ver.outputs.v }}/g" -e "s/__APP_BUILD__/test/g" www/index.html
 
       - name: Política de segurança do app (CSP)
         run: node native/add-csp.cjs www/index.html
