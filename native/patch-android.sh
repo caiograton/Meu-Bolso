@@ -18,6 +18,7 @@ cp native/DeviceLockPlugin.java "$PKG_DIR/DeviceLockPlugin.java"
 cp native/VoiceEntryPlugin.java "$PKG_DIR/VoiceEntryPlugin.java"
 cp native/FileSavePlugin.java "$PKG_DIR/FileSavePlugin.java"
 cp native/SafeAreaPlugin.java "$PKG_DIR/SafeAreaPlugin.java"
+cp native/PermsPlugin.java "$PKG_DIR/PermsPlugin.java"
 cp native/InsetMath.java "$PKG_DIR/InsetMath.java"
 cp native/ImeTracker.java "$PKG_DIR/ImeTracker.java"
 cp native/widget/QuickWidgetPlugin.java "$PKG_DIR/QuickWidgetPlugin.java"
@@ -59,6 +60,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(QuickWidgetPlugin.class);
         registerPlugin(VoiceEntryPlugin.class);
         registerPlugin(FileSavePlugin.class);
+        registerPlugin(PermsPlugin.class);
         super.onCreate(savedInstanceState);
         if (getSharedPreferences("mb_sec", MODE_PRIVATE).getBoolean("secure", false)) {
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
@@ -268,12 +270,22 @@ if ! grep -q "WRITE_EXTERNAL_STORAGE" "$MANIFEST"; then
 fi
 grep -q "WRITE_EXTERNAL_STORAGE" "$MANIFEST" || { echo "Não foi possível adicionar a permissão de gravação"; exit 1; }
 grep -q "android.speech.RecognitionService" "$MANIFEST" || { echo "Não foi possível declarar o serviço de voz"; exit 1; }
+if ! grep -q "android.permission.POST_NOTIFICATIONS" "$MANIFEST"; then
+  sed -i '0,/<application/s//<uses-permission android:name="android.permission.POST_NOTIFICATIONS" \/>\n    <application/' "$MANIFEST"
+fi
+grep -q "android.permission.POST_NOTIFICATIONS" "$MANIFEST" || { echo "Não foi possível adicionar a permissão de notificações"; exit 1; }
 
 # Abertura sem piscada: a tela inicial do Android (inclusive a do Android 12+)
 # já nasce na cor do pergaminho (ou tinta, no modo escuro), sem ícone, e emenda
 # direto na animação do selo.
 RES="android/app/src/main/res"
 mkdir -p "$RES/values" "$RES/values-v31" "$RES/drawable"
+# Ícone pequeno das notificações (selo em silhueta, branco; o Android pinta).
+cat > "$RES/drawable/ic_stat_sigillum.xml" <<'XML'
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
+    <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd" android:pathData="M12,1.5l2.1,1.6 2.6,-0.3 1.1,2.4 2.4,1.1 -0.3,2.6 1.6,2.1 -1.6,2.1 0.3,2.6 -2.4,1.1 -1.1,2.4 -2.6,-0.3 -2.1,1.6 -2.1,-1.6 -2.6,0.3 -1.1,-2.4 -2.4,-1.1 0.3,-2.6 -1.6,-2.1 1.6,-2.1 -0.3,-2.6 2.4,-1.1 1.1,-2.4 2.6,0.3z M12,6.2a5.8,5.8 0,1 0,0.01 0z M12,8.2a3.8,3.8 0,1 1,-0.01 0z"/>
+</vector>
+XML
 cat > "$RES/values/meubolso_cores.xml" <<'XML'
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
