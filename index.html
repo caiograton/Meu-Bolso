@@ -1059,7 +1059,7 @@ function sortLang(){var l=Q("oidioma");if(!l)return;var b=[].slice.call(l.queryS
 function markLang(){sortLang();Q("idioma").value=LCODE;if(Q("oidioma").firstChild)markOpts()}
 function setLang(l){LCODE=l;LANG=l.slice(0,2);LOC=l;try{localStorage.setItem("lang",l)}catch(e){}
  document.documentElement.lang=l;nf=new Intl.NumberFormat(LOC,{style:"currency",currency:moeda});
- var sh=Q("cbg").classList.contains("open");setNome();fillCats();fillGoalSel();document.querySelectorAll(".mo").forEach(function(el){el.textContent=SYM()});render();trAll();markLang();cxHow()}
+ var sh=Q("cbg").classList.contains("open");setNome();fillCats();fillGoalSel();document.querySelectorAll(".mo").forEach(function(el){el.textContent=SYM()});render();try{plCardUpd();plChips();avSync();vcUi();if(Q("avpg"))avPage(true);ntfPlan()}catch(e){}trAll();markLang();cxHow()}
 Q("cfg").onclick=function(){var b=Q("cfg");if(b.classList.contains("go"))return;var rm=false;try{rm=matchMedia("(prefers-reduced-motion:reduce)").matches}catch(e){}
  function open(){QTD=false;markLang();showCfg(0);Q("cbg").classList.add("open");setTimeout(function(){b.classList.remove("go")},400)}
  if(rm){open();return}b.classList.add("go");setTimeout(open,560)};
@@ -2204,7 +2204,7 @@ var APP_BUILD="__APP_BUILD__";
 function plTest(){return APP_BUILD!=="store"}
 function plSimFree(){try{return localStorage.getItem("plsim")==="free"}catch(e){return false}}
 function isPlus(){if(plTest())return !plSimFree();return false}
-function plPrice(){var br=moeda==="BRL";return{y:br?"R$ 59,90":"€ 17,99",m:br?"R$ 9,90":"€ 2,99",ym:br?"R$ 4,99":"€ 1,50"}}
+function plPrice(){var br=moeda==="BRL",c=br?"BRL":"EUR",v=br?[59.9,9.9,4.99]:[17.99,2.99,1.5],f=function(n){try{return new Intl.NumberFormat(LOC,{style:"currency",currency:c}).format(n)}catch(e){return c+" "+n}};return{y:f(v[0]),m:f(v[1]),ym:f(v[2]),yv:v[0],mv:v[1],c:c}}
 var PLK={imp:["","Traga seu extrato com o Plus","O mês inteiro do seu banco em segundos, lido aqui no celular."],
  pdf:["","Seu extrato está pronto","Visualizar e baixar o PDF com o selo do Sigillum faz parte do Plus."],
  goal:["","Que tal mais metas?","O grátis acompanha 1 meta. Com o Plus, quantas quiser."],
@@ -2350,7 +2350,8 @@ function avCands(){var L=[],now=new Date(),mk=now.getFullYear()+"-"+now.getMonth
  return L}
 function avSync(){var a=avLoad(),del=avDel(),have={},ch=false;a.forEach(function(x){have[x.id]=1});
  var fresh=false;try{fresh=!localStorage.getItem("avinit")}catch(e){}
- avCands().forEach(function(c){if(have[c.id]||del.indexOf(c.id)>=0)return;a.unshift({id:c.id,ty:c.ty,t:c.t,x:c.x,a:c.a,act:c.act,g:c.g,at:Date.now(),r:false});ch=true});
+ var by={};a.forEach(function(x){by[x.id]=x});
+ avCands().forEach(function(c){var o=by[c.id];if(o){if(o.x!==c.x||o.t!==c.t||o.a!==c.a){o.x=c.x;o.t=c.t;o.a=c.a;ch=true}return}if(del.indexOf(c.id)>=0)return;a.unshift({id:c.id,ty:c.ty,t:c.t,x:c.x,a:c.a,act:c.act,g:c.g,at:Date.now(),r:false});ch=true});
  if(fresh){try{localStorage.setItem("avinit","1")}catch(e){}}
  if(ch)avSave(a);avBadge();return a}
 function avBadge(){var n=avLoad().filter(function(x){return !x.r}).length,c=Q("avct"),b=Q("avbell");if(!c)return;c.hidden=!n;c.textContent=n>9?"9+":String(n);if(b)b.setAttribute("aria-label",n?TF(n===1?"Avisos, 1 não lido":"Avisos, {n} não lidos",{n:n}):TT("Avisos"))}
@@ -2358,7 +2359,7 @@ function avWhen(t){var d=new Date(t),n=new Date(),y=new Date(n.getFullYear(),n.g
  if(d.toDateString()===n.toDateString())return TF("hoje, {h}",{h:hm});if(d.toDateString()===y.toDateString())return TT("ontem");return d.toLocaleDateString(LOC,{day:"numeric",month:"short"}).replace(".","")}
 function avReadAll(){var a=avLoad();a.forEach(function(x){x.r=true});avSave(a);avBadge()}
 function avPage(keep){var a=avSync(),old=Q("avpg");if(old)old.remove();var un=a.filter(function(x){return !x.r}).length;
- var b=a.length?'<div class="av-h"><span>'+esc(un?TF(un===1?"1 não lido":"{n} não lidos",{n:un}):TT("Tudo lido"))+'</span><button type="button" class="gn-lnk av-clr" id="avclr">'+esc(TT("Limpar tudo"))+'</button></div>'+a.map(function(x){return'<div class="av-it'+(x.r?"":" nw")+'">'+avIc(x.ty)+'<div class="av-tx"><b>'+esc(TT(x.t))+'</b><p>'+esc(x.x)+'</p>'+(x.a?'<button type="button" class="av-ac" data-ava="'+esc(x.id)+'">'+esc(TT(x.a))+'</button>':"")+'<small>'+esc(avWhen(x.at))+'</small></div><button type="button" class="av-x" data-avx="'+esc(x.id)+'" aria-label="'+esc(TT("Apagar aviso"))+'">×</button></div>'}).join("")+
+ var b=a.length?'<div class="av-h"><span>'+esc(un?TF(un===1?"1 não lido":"{n} não lidos",{n:un}):TT("Tudo lido"))+'</span><button type="button" class="gn-lnk av-clr" id="avclr">'+esc(TT("Limpar tudo"))+'</button></div>'+a.map(function(x){return'<div class="av-it'+(x.r?"":" nw")+'">'+avIc(x.ty)+'<div class="av-tx"><b>'+esc(TT(x.t))+'</b><p>'+esc(avX(x))+'</p>'+(x.a?'<button type="button" class="av-ac" data-ava="'+esc(x.id)+'">'+esc(TT(x.a))+'</button>':"")+'<small>'+esc(avWhen(x.at))+'</small></div><button type="button" class="av-x" data-avx="'+esc(x.id)+'" aria-label="'+esc(TT("Apagar aviso"))+'">×</button></div>'}).join("")+
   (un?'<button type="button" class="gn-2" style="margin-top:16px" id="avall">'+esc(TT("Marcar todas como lidas"))+'</button>':""):'<div class="empty" style="padding:40px 10px">'+esc(TT("Nenhum aviso por aqui."))+'</div>';
  var o=gdSheet("avpg",TT("Avisos"),b,"");if(keep)o.classList.add("on","ni");
  o.querySelector(".gn-bk").onclick=function(){avReadAll();gdClose(o)};
@@ -2376,7 +2377,7 @@ setTimeout(function(){try{avInit()}catch(e){}},0);
 function plSub(){try{return JSON.parse(localStorage.getItem("plsub")||"null")}catch(e){return null}}
 function plSubSet(o){try{if(o)localStorage.setItem("plsub",JSON.stringify(o));else localStorage.removeItem("plsub")}catch(e){}}
 function plTrialOk(){try{return localStorage.getItem("pltu")!=="1"}catch(e){return true}}
-function plDt(t,y){var o={day:"numeric",month:"short"};if(y)o.year="numeric";return new Date(t).toLocaleDateString(LOC,o).replace(/\./g,"")}
+function plDt(t,y){var o={day:"numeric",month:"short"};if(y)o.year="numeric";var r=new Date(t).toLocaleDateString(LOC,o);return LANG==="pt"||LANG==="es"?r.replace(/\./g,""):r}
 function plSubEnd(s){if(!s)return 0;var d=new Date(s.c||s.s);if(s.p==="y")d.setFullYear(d.getFullYear()+1);else d.setMonth(d.getMonth()+1);return d.getTime()}
 function plNum(v){var x=String(v).replace(/[^\d,]/g,"").replace(",",".");return Number(x)||0}
 function plBen(){return PLB.filter(function(x){return !(x[0]==="♪"&&vcNo())})}
@@ -2403,12 +2404,13 @@ function plPay(opt){opt=opt&&typeof opt==="object"&&!opt.target?opt:{};if(Q("plp
 function plBought(p,trial){var now=Date.now(),first=trial?now+30*864e5:now;
  if(p==="y"&&trial){try{localStorage.setItem("pltu","1")}catch(e){}}
  plSubSet({p:p,s:now,c:first});try{localStorage.removeItem("plsim");localStorage.removeItem("plav")}catch(e){}
- var P=plPrice(),v=plNum(p==="y"?P.y:P.m),cc=moeda==="BRL"?"BRL":"EUR",d=new Date(first),k=ym(d.getFullYear(),d.getMonth()),nk=ym(new Date().getFullYear(),new Date().getMonth());
+ var P=plPrice(),v=p==="y"?P.yv:P.mv,cc=P.c,d=new Date(first),k=ym(d.getFullYear(),d.getMonth()),nk=ym(new Date().getFullYear(),new Date().getMonth());
  rules=rules.filter(function(r){if(!r.plus)return true;if(r.start>=nk)return false;r.end=nk-1;return true});
  var nm=TT(p==="y"?"Sigillum Plus · anual":"Sigillum Plus · mensal"),r={id:nid++,t:"s",cat:"",sub:"",desc:nm,val:v,goal:null,cc:cc===moeda?null:cc,rate:null,day:d.getDate(),start:k,plus:p};if(p==="y")r.per="a";
  rules.push(r);SYNC.armed=true;try{saveNow()}catch(e){}
- avAdd({id:"plx-"+now,ty:"plx",t:"A assinatura do Plus foi lançada",x:TF("{n}, {v} em {d}, como lançamento fixo. Escolha a categoria e a subcategoria.",{n:nm,v:fmtC(v,cc),d:plDt(first)}),a:"Escolher categoria",act:"edit",g:"r"+r.id});
+ avAdd({id:"plx-"+now,ty:"plx",t:"A assinatura do Plus foi lançada",x:TF("{n}, {v} em {d}, como lançamento fixo. Escolha a categoria e a subcategoria.",{n:nm,v:fmtC(v,cc),d:plDt(first)}),xk:"{n}, {v} em {d}, como lançamento fixo. Escolha a categoria e a subcategoria.",xp:{n:p==="y"?"Sigillum Plus · anual":"Sigillum Plus · mensal",v:v,cc:cc,d:first},a:"Escolher categoria",act:"edit",g:"r"+r.id});
  plAfter()}
+function avX(x){if(!x.xk)return x.x;var p={},q=x.xp||{};Object.keys(q).forEach(function(k){p[k]=k==="d"?plDt(q[k]):k==="n"?TT(q[k]):k==="v"&&typeof q[k]==="number"?fmtC(q[k],q.cc||moeda):q[k]});return TF(x.xk,p)}
 function avAdd(it){var a=avLoad();it.at=it.at||Date.now();it.r=false;a.unshift(it);avSave(a);avBadge()}
 
 /* Já é Plus */
