@@ -119,4 +119,27 @@ public class PermsPlugin extends Plugin {
             }
         }
     }
+
+    /** Abre a tela de assinaturas da Play Store, já no Sigillum. */
+    @PluginMethod
+    public void openSubs(PluginCall call) {
+        String pkg = getContext().getPackageName();
+        String url = "https://play.google.com/store/account/subscriptions?package=" + pkg;
+        try {
+            Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            i.setPackage("com.android.vending");
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            getContext().startActivity(i);
+            call.resolve();
+        } catch (Exception e) {
+            try {
+                Intent w = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                w.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                getContext().startActivity(w);
+                call.resolve();
+            } catch (Exception e2) {
+                call.reject("não abriu", e2);
+            }
+        }
+    }
 }
