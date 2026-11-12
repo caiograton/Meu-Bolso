@@ -19,6 +19,8 @@ cp native/VoiceEntryPlugin.java "$PKG_DIR/VoiceEntryPlugin.java"
 cp native/FileSavePlugin.java "$PKG_DIR/FileSavePlugin.java"
 cp native/SafeAreaPlugin.java "$PKG_DIR/SafeAreaPlugin.java"
 cp native/PermsPlugin.java "$PKG_DIR/PermsPlugin.java"
+cp native/NearbyPlugin.java "$PKG_DIR/NearbyPlugin.java"
+cp native/QrScanPlugin.java "$PKG_DIR/QrScanPlugin.java"
 cp native/InsetMath.java "$PKG_DIR/InsetMath.java"
 cp native/ImeTracker.java "$PKG_DIR/ImeTracker.java"
 cp native/widget/QuickWidgetPlugin.java "$PKG_DIR/QuickWidgetPlugin.java"
@@ -61,6 +63,8 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(VoiceEntryPlugin.class);
         registerPlugin(FileSavePlugin.class);
         registerPlugin(PermsPlugin.class);
+        registerPlugin(NearbyPlugin.class);
+        registerPlugin(QrScanPlugin.class);
         super.onCreate(savedInstanceState);
         if (getSharedPreferences("mb_sec", MODE_PRIVATE).getBoolean("secure", false)) {
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
@@ -250,6 +254,10 @@ GRADLE="android/app/build.gradle"
 test -f "$GRADLE" || { echo "$GRADLE não encontrado"; exit 1; }
 sed -i '0,/^dependencies {/s//dependencies {\n    implementation "androidx.biometric:biometric:1.1.0"/' "$GRADLE"
 grep -q "androidx.biometric:biometric" "$GRADLE" || { echo "Não foi possível adicionar a dependência de biometria"; exit 1; }
+# Conectividade: troca por perto (Nearby Connections) e leitor de QR do Google Play Services.
+sed -i '0,/^dependencies {/s//dependencies {\n    implementation "com.google.android.gms:play-services-nearby:19.3.0"\n    implementation "com.google.android.gms:play-services-code-scanner:16.1.0"/' "$GRADLE"
+grep -q "play-services-nearby" "$GRADLE" || { echo "Não foi possível adicionar a dependência do Nearby"; exit 1; }
+grep -q "play-services-code-scanner" "$GRADLE" || { echo "Não foi possível adicionar o leitor de QR"; exit 1; }
 
 MANIFEST="android/app/src/main/AndroidManifest.xml"
 if ! grep -q "USE_BIOMETRIC" "$MANIFEST"; then
@@ -274,6 +282,14 @@ if ! grep -q "android.permission.POST_NOTIFICATIONS" "$MANIFEST"; then
   sed -i '0,/<application/s//<uses-permission android:name="android.permission.POST_NOTIFICATIONS" \/>\n    <application/' "$MANIFEST"
 fi
 grep -q "android.permission.POST_NOTIFICATIONS" "$MANIFEST" || { echo "Não foi possível adicionar a permissão de notificações"; exit 1; }
+# Troca por perto: Bluetooth e Wi-Fi direto (Android 12+ pede "Dispositivos próximos"; até o 12, a localização).
+if ! grep -q "android.permission.BLUETOOTH_ADVERTISE" "$MANIFEST"; then
+  sed -i '0,/<application/s//<uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" \/>\n    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" \/>\n    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" \/>\n    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" \/>\n    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" \/>\n    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" \/>\n    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" \/>\n    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" \/>\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" android:maxSdkVersion="32" \/>\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="32" \/>\n    <application/' "$MANIFEST"
+fi
+grep -q "android.permission.BLUETOOTH_ADVERTISE" "$MANIFEST" || { echo "Não foi possível adicionar as permissões da troca por perto"; exit 1; }
+if ! grep -q "com.google.mlkit.vision.DEPENDENCIES" "$MANIFEST"; then
+  sed -i '0,/<\/application>/s//    <meta-data android:name="com.google.mlkit.vision.DEPENDENCIES" android:value="barcode_ui" \/>\n    <\/application>/' "$MANIFEST"
+fi
 
 # Abertura sem piscada: a tela inicial do Android (inclusive a do Android 12+)
 # já nasce na cor do pergaminho (ou tinta, no modo escuro), sem ícone, e emenda

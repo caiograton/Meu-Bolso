@@ -27,7 +27,14 @@ import com.getcapacitor.annotation.PermissionCallback;
     permissions = {
         @Permission(alias = "cam", strings = { Manifest.permission.CAMERA }),
         @Permission(alias = "mic", strings = { Manifest.permission.RECORD_AUDIO }),
-        @Permission(alias = "ntf", strings = { "android.permission.POST_NOTIFICATIONS" })
+        @Permission(alias = "ntf", strings = { "android.permission.POST_NOTIFICATIONS" }),
+        @Permission(alias = "n33", strings = {
+            "android.permission.BLUETOOTH_SCAN", "android.permission.BLUETOOTH_ADVERTISE",
+            "android.permission.BLUETOOTH_CONNECT", "android.permission.NEARBY_WIFI_DEVICES" }),
+        @Permission(alias = "n31", strings = {
+            "android.permission.BLUETOOTH_SCAN", "android.permission.BLUETOOTH_ADVERTISE",
+            "android.permission.BLUETOOTH_CONNECT", Manifest.permission.ACCESS_FINE_LOCATION }),
+        @Permission(alias = "nloc", strings = { Manifest.permission.ACCESS_FINE_LOCATION })
     }
 )
 public class PermsPlugin extends Plugin {
@@ -43,8 +50,13 @@ public class PermsPlugin extends Plugin {
         return s.toString();
     }
 
+    /** "nby" (Dispositivos próximos, para a troca por perto) muda conforme a versão do Android. */
     private String alias(PluginCall call) {
         String a = call.getString("p", "");
+        if ("nby".equals(a)) {
+            int v = Build.VERSION.SDK_INT;
+            return v >= 33 ? "n33" : (v >= 31 ? "n31" : "nloc");
+        }
         return ("cam".equals(a) || "mic".equals(a) || "ntf".equals(a)) ? a : null;
     }
 
