@@ -1997,8 +1997,10 @@ TOURT["txqz"]=["No <b>perfil de poupador</b>, um cartão abre no meio da tela co
 Object.assign(I18N,{"Renovação do plano":["Plan renewal","Renovación del plan"]});Object.assign(JA,{"Renovação do plano":"プランの更新"});(function(){var X={"de":{"Renovação do plano":"Abo-Verlängerung"},"fr":{"Renovação do plano":"Renouvellement de la formule"},"pl":{"Renovação do plano":"Odnowienie planu"},"it":{"Renovação do plano":"Rinnovo del piano"}};Object.keys(X).forEach(function(l){if(NLX[l])Object.assign(NLX[l],X[l])})})();
 Object.assign(I18N,{"Próxima":["Next","Siguiente"],"Ver resultado":["See result","Ver resultado"]});Object.assign(JA,{"Próxima":"次へ","Ver resultado":"結果を見る"});(function(){var X={"de":{"Próxima":"Weiter","Ver resultado":"Ergebnis ansehen"},"fr":{"Próxima":"Suivante","Ver resultado":"Voir le résultat"},"pl":{"Próxima":"Dalej","Ver resultado":"Zobacz wynik"},"it":{"Próxima":"Avanti","Ver resultado":"Vedi il risultato"}};Object.keys(X).forEach(function(l){if(NLX[l])Object.assign(NLX[l],X[l])})})();
 /*metas-avisos-permissoes*/
-/* E-mail central do Sigillum. Vazio = o envio do formato do extrato fica desligado. */
-var SUPPORT_MAIL="";
+/* E-mail central do Sigillum. Vazio = o envio do formato do extrato fica desligado.
+   TEMPORÁRIO (fase de testes): apelido do Gmail pessoal com filtro "Sigillum – Layouts".
+   Trocar pelo e-mail oficial antes de publicar na Play Store. */
+var SUPPORT_MAIL="caiog.ebox+sigillum@gmail.com";
 /* Vira true quando o Sigillum estiver publicado na Play Store (o botão Avalie passa a abrir a loja). */
 var STORE_LIVE=false;
 function gnNat(){try{return !!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform())}catch(e){return false}}
@@ -3404,8 +3406,8 @@ async function imConfirm(){if(IM&&IM.rev){imRevEnd();return}if(!IM||IMBUSY)retur
   Q("imdt").innerHTML=esc(TF(n===1?"{n} lançamento importado.":"{n} lançamentos importados.",{n:n}))+(np?" "+esc(TF(np===1?"{p} ficou pendente, sem categoria.":"{p} ficaram pendentes, sem categoria.",{p:np})):"")+" "+esc(TT("Para voltar atrás, use Desfazer esta importação em Configurações › Lançamentos e conectividade › Importar extrato."));imShow("imdone",true)}
  catch(e){IMBUSY=false;if(IM)imRender()}}
 var IMQ=null;
-/* Envio do layout ao desenvolvedor: DESATIVADO até existir o e-mail central. Para reativar, troque para true (ver plano Sigillum Central, Fase D). */
-var IM_SHARE_ON=false;
+/* Envio do layout ao desenvolvedor: ATIVADO para testes com o e-mail temporário (SUPPORT_MAIL). Trocar o e-mail antes da Play Store. */
+var IM_SHARE_ON=true; /* reativado com o e-mail temporário de testes */
 function imRevStart(){var q=IMQ;if(!q)return;imShow("imq",false);
  IM={res:q.res,items:q.items,skipN:0,total:q.items.length,from:q.from,to:q.to,page:1,ask:null,chk:q.chk,rev:true,impId:q.id};
  IM.items.forEach(function(x){x.rv=!!x.rv});imRender();imShow("imbg",true);Q("imb").scrollTop=0}
