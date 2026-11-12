@@ -12,6 +12,8 @@ permissions:
 jobs:
   apk:
     runs-on: ubuntu-latest
+    env:
+      LEITORES_TOKEN: ${{ secrets.LEITORES_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
@@ -29,6 +31,24 @@ jobs:
 
       - name: Preparar página do app
         run: npm run build:web
+
+      - name: Baixar os leitores (repositório privado sigillum-leitores)
+        id: lei
+        if: ${{ env.LEITORES_TOKEN != '' }}
+        uses: actions/checkout@v4
+        with:
+          repository: caiograton/sigillum-leitores
+          token: ${{ secrets.LEITORES_TOKEN }}
+          path: leitores
+
+      - name: Testar e aplicar os leitores
+        run: |
+          if [ -f leitores/package.json ]; then
+            (cd leitores && npm test)
+            node native/inject-leitores.cjs www/index.html leitores/dist/leitores.js
+          else
+            echo "::warning::Sem acesso ao sigillum-leitores (segredo LEITORES_TOKEN). Usando a cópia dos leitores que está no index.html."
+          fi
 
       - name: Embutir a fonte no app (sem pedir nada ao Google)
         run: |
