@@ -21,6 +21,8 @@ cp native/SafeAreaPlugin.java "$PKG_DIR/SafeAreaPlugin.java"
 cp native/PermsPlugin.java "$PKG_DIR/PermsPlugin.java"
 cp native/NearbyPlugin.java "$PKG_DIR/NearbyPlugin.java"
 cp native/QrScanPlugin.java "$PKG_DIR/QrScanPlugin.java"
+cp native/AutoEntryPlugin.java "$PKG_DIR/AutoEntryPlugin.java"
+cp native/NotifReaderService.java "$PKG_DIR/NotifReaderService.java"
 cp native/InsetMath.java "$PKG_DIR/InsetMath.java"
 cp native/ImeTracker.java "$PKG_DIR/ImeTracker.java"
 cp native/widget/QuickWidgetPlugin.java "$PKG_DIR/QuickWidgetPlugin.java"
@@ -65,6 +67,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(PermsPlugin.class);
         registerPlugin(NearbyPlugin.class);
         registerPlugin(QrScanPlugin.class);
+        registerPlugin(AutoEntryPlugin.class);
         super.onCreate(savedInstanceState);
         if (getSharedPreferences("mb_sec", MODE_PRIVATE).getBoolean("secure", false)) {
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
@@ -287,6 +290,13 @@ if ! grep -q "android.permission.BLUETOOTH_ADVERTISE" "$MANIFEST"; then
   sed -i '0,/<application/s//<uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" \/>\n    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" \/>\n    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" \/>\n    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" \/>\n    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" \/>\n    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" \/>\n    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" \/>\n    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" \/>\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" android:maxSdkVersion="32" \/>\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="32" \/>\n    <application/' "$MANIFEST"
 fi
 grep -q "android.permission.BLUETOOTH_ADVERTISE" "$MANIFEST" || { echo "Não foi possível adicionar as permissões da troca por perto"; exit 1; }
+# Lançamento automático (Plus): leitor de avisos dos apps escolhidos e a lista de apps de banco que o app pode reconhecer.
+if ! grep -q "NotifReaderService" "$MANIFEST"; then
+  sed -i '0,/<\/application>/s//    <service android:name="com.caiograton.meubolso.NotifReaderService" android:label="Sigillum · Lançamento automático" android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE" android:exported="false">\n            <intent-filter>\n                <action android:name="android.service.notification.NotificationListenerService" \/>\n            <\/intent-filter>\n        <\/service>\n    <\/application>/' "$MANIFEST"
+  sed -i '0,/<application/s//<queries>\n        <package android:name="com.google.android.apps.walletnfcrel" \/>\n        <package android:name="com.revolut.revolut" \/>\n        <package android:name="com.samsung.android.spay" \/>\n        <package android:name="com.aib.mobilebanking" \/>\n        <package android:name="com.bankofireland.mobilebanking" \/>\n        <package android:name="de.number26.android" \/>\n        <package android:name="com.transferwise.android" \/>\n        <package android:name="com.bunq.android" \/>\n        <package android:name="co.uk.getmondo" \/>\n        <package android:name="com.paypal.android.p2pmobile" \/>\n        <package android:name="com.nu.production" \/>\n        <package android:name="com.itau" \/>\n        <package android:name="br.com.intermedium" \/>\n        <package android:name="com.c6bank.app" \/>\n        <package android:name="com.bradesco" \/>\n        <package android:name="com.santander.app" \/>\n        <package android:name="br.com.bb.android" \/>\n        <package android:name="br.com.gabba.Caixa" \/>\n        <package android:name="com.mercadopago.wallet" \/>\n        <package android:name="com.picpay" \/>\n    <\/queries>\n    <application/' "$MANIFEST"
+fi
+grep -q "NotifReaderService" "$MANIFEST" || { echo "Não foi possível registrar o leitor de avisos"; exit 1; }
+grep -q "com.revolut.revolut" "$MANIFEST" || { echo "Não foi possível declarar os apps de banco"; exit 1; }
 if ! grep -q "com.google.mlkit.vision.DEPENDENCIES" "$MANIFEST"; then
   sed -i '0,/<\/application>/s//    <meta-data android:name="com.google.mlkit.vision.DEPENDENCIES" android:value="barcode_ui" \/>\n    <\/application>/' "$MANIFEST"
 fi
