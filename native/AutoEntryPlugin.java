@@ -81,6 +81,16 @@ public class AutoEntryPlugin extends Plugin {
         } catch (Exception e) { call.reject("open"); }
     }
 
+    /** Pede ao leitor para olhar os avisos que ainda estão na barra. */
+    @PluginMethod
+    public void scan(PluginCall call) {
+        NotifReaderService s = NotifReaderService.inst;
+        if (s != null && prefs().getBoolean("on", false)) s.scanActive();
+        JSObject r = new JSObject();
+        r.put("ok", s != null);
+        call.resolve(r);
+    }
+
     /** Entrega os avisos guardados e esvazia a fila. */
     @PluginMethod
     public void pull(PluginCall call) {

@@ -21,6 +21,25 @@ public class NotifReaderService extends NotificationListenerService {
     static final String PREFS = "mb_au";
     static final int MAX = 200;
     static volatile AutoEntryPlugin plugin;
+    static volatile NotifReaderService inst;
+
+    @Override
+    public void onListenerConnected() { inst = this; scanActive(); }
+
+    @Override
+    public void onListenerDisconnected() { if (inst == this) inst = null; }
+
+    /** Lê os avisos que ainda estão na barra (de antes de ligar, ou de um banco marcado agora). */
+    void scanActive() {
+        try {
+            StatusBarNotification[] a = getActiveNotifications();
+            if (a == null) return;
+            int n = 0;
+            for (StatusBarNotification sbn : a) if (keep(sbn)) n++;
+            AutoEntryPlugin pl = plugin;
+            if (n > 0 && pl != null) pl.posted();
+        } catch (Exception ignored) { }
+    }
 
     static Set<String> apps(Context c) {
         SharedPreferences p = c.getSharedPreferences(PREFS, MODE_PRIVATE);
@@ -37,29 +56,33 @@ public class NotifReaderService extends NotificationListenerService {
     @Override
     public void onNotificationPosted(StatusBarNotification sbn) {
         try {
-            if (sbn == null) return;
-            String pkg = sbn.getPackageName();
-            if (pkg == null || pkg.equals(getPackageName()) || !apps(this).contains(pkg)) return;
-            Notification n = sbn.getNotification();
-            if (n == null || (n.flags & Notification.FLAG_GROUP_SUMMARY) != 0 || sbn.isOngoing()) return;
-            Bundle ex = n.extras;
-            if (ex == null) return;
-            String title = txt(ex, Notification.EXTRA_TITLE);
-            String text = txt(ex, Notification.EXTRA_BIG_TEXT);
-            if (text.isEmpty()) text = txt(ex, Notification.EXTRA_TEXT);
-            if (title.isEmpty() && text.isEmpty()) return;
-            if (title.length() > 200) title = title.substring(0, 200);
-            if (text.length() > 600) text = text.substring(0, 600);
-            JSONObject o = new JSONObject();
-            o.put("pkg", pkg);
-            o.put("title", title);
-            o.put("text", text);
-            o.put("when", sbn.getPostTime());
-            o.put("key", sbn.getKey() + "|" + sbn.getPostTime());
-            push(this, o);
-            AutoEntryPlugin pl = plugin;
-            if (pl != null) pl.posted();
+            if (keep(sbn)) { AutoEntryPlugin pl = plugin; if (pl != null) pl.posted(); }
         } catch (Exception ignored) { }
+    }
+
+    /** Guarda o aviso na fila se for de um app escolhido. Devolve true quando guardou. */
+    private boolean keep(StatusBarNotification sbn) throws Exception {
+        if (sbn == null) return false;
+        String pkg = sbn.getPackageName();
+        if (pkg == null || pkg.equals(getPackageName()) || !apps(this).contains(pkg)) return false;
+        Notification n = sbn.getNotification();
+        if (n == null || (n.flags & Notification.FLAG_GROUP_SUMMARY) != 0 || sbn.isOngoing()) return false;
+        Bundle ex = n.extras;
+        if (ex == null) return false;
+        String title = txt(ex, Notification.EXTRA_TITLE);
+        String text = txt(ex, Notification.EXTRA_BIG_TEXT);
+        if (text.isEmpty()) text = txt(ex, Notification.EXTRA_TEXT);
+        if (title.isEmpty() && text.isEmpty()) return false;
+        if (title.length() > 200) title = title.substring(0, 200);
+        if (text.length() > 600) text = text.substring(0, 600);
+        JSONObject o = new JSONObject();
+        o.put("pkg", pkg);
+        o.put("title", title);
+        o.put("text", text);
+        o.put("when", sbn.getPostTime());
+        o.put("key", sbn.getKey() + "|" + sbn.getPostTime());
+        push(this, o);
+        return true;
     }
 
     static synchronized void push(Context c, JSONObject o) throws Exception {
