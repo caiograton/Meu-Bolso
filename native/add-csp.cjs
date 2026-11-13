@@ -23,7 +23,7 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self' data:",
-  "connect-src 'self' blob: data: https://api.frankfurter.dev https://data-api.binance.vision https://fapi.binance.com",
+  "connect-src 'self' blob: data: https://docs.google.com https://api.frankfurter.dev https://data-api.binance.vision https://fapi.binance.com",
   "media-src 'none'",
   "object-src 'none'",
   "frame-src 'none'",
