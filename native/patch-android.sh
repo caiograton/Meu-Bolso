@@ -267,10 +267,15 @@ if ! grep -q "USE_BIOMETRIC" "$MANIFEST"; then
   sed -i '0,/<application/s//<uses-permission android:name="android.permission.USE_BIOMETRIC" \/>\n    <application/' "$MANIFEST"
 fi
 grep -q "USE_BIOMETRIC" "$MANIFEST" || { echo "Não foi possível adicionar a permissão"; exit 1; }
-if ! grep -q "android.permission.CAMERA" "$MANIFEST"; then
-  sed -i '0,/<application/s//<uses-permission android:name="android.permission.CAMERA" \/>\n    <uses-feature android:name="android.hardware.camera" android:required="false" \/>\n    <application/' "$MANIFEST"
+# Sem permissão de câmera: o QR usa o leitor da Google (Play services) e a foto do perfil
+# abre o app de câmera do próprio celular, que devolve só a foto. A linha "remove" garante
+# que nenhuma biblioteca traga a permissão de volta.
+grep -q 'xmlns:tools=' "$MANIFEST" || sed -i '0,/<manifest /s//<manifest xmlns:tools="http:\/\/schemas.android.com\/tools" /' "$MANIFEST"
+if ! grep -q 'android.permission.CAMERA" tools:node="remove"' "$MANIFEST"; then
+  sed -i '0,/<application/s//<uses-permission android:name="android.permission.CAMERA" tools:node="remove" \/>\n    <application/' "$MANIFEST"
 fi
-grep -q "android.permission.CAMERA" "$MANIFEST" || { echo "Não foi possível adicionar a permissão da câmera"; exit 1; }
+grep -q 'android.permission.CAMERA" tools:node="remove"' "$MANIFEST" || { echo "Não foi possível retirar a permissão da câmera"; exit 1; }
+grep -q 'xmlns:tools=' "$MANIFEST" || { echo "Falta o espaço de nomes tools no manifesto"; exit 1; }
 # Microfone, só para o lançamento por voz (reconhecimento no aparelho, sem internet).
 if ! grep -q "android.permission.RECORD_AUDIO" "$MANIFEST"; then
   sed -i '0,/<application/s//<uses-permission android:name="android.permission.RECORD_AUDIO" \/>\n    <uses-feature android:name="android.hardware.microphone" android:required="false" \/>\n    <queries>\n        <intent>\n            <action android:name="android.speech.RecognitionService" \/>\n        <\/intent>\n    <\/queries>\n    <application/' "$MANIFEST"

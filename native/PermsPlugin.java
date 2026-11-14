@@ -25,7 +25,6 @@ import com.getcapacitor.annotation.PermissionCallback;
 @CapacitorPlugin(
     name = "Perms",
     permissions = {
-        @Permission(alias = "cam", strings = { Manifest.permission.CAMERA }),
         @Permission(alias = "mic", strings = { Manifest.permission.RECORD_AUDIO }),
         @Permission(alias = "ntf", strings = { "android.permission.POST_NOTIFICATIONS" }),
         @Permission(alias = "n33", strings = {
@@ -57,7 +56,7 @@ public class PermsPlugin extends Plugin {
             int v = Build.VERSION.SDK_INT;
             return v >= 33 ? "n33" : (v >= 31 ? "n31" : "nloc");
         }
-        return ("cam".equals(a) || "mic".equals(a) || "ntf".equals(a)) ? a : null;
+        return ("mic".equals(a) || "ntf".equals(a)) ? a : null;
     }
 
     @PluginMethod

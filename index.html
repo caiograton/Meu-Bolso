@@ -3198,8 +3198,9 @@ document.querySelectorAll("#phmenu label.pbtn").forEach(function(l){l.addEventLi
 window.addEventListener("blur",noPick);document.addEventListener("visibilitychange",function(){if(document.hidden)noPick()});
 document.querySelectorAll(".pfin").forEach(function(el){el.addEventListener("cancel",noPick)});
 function camFallback(){var nat=false;try{nat=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform())}catch(e){}if(nat){Q("phmsg").textContent="";Q("phcapin").click()}else Q("phmsg").textContent="Não foi possível acessar a câmera neste ambiente."}
-Q("phcam").onclick=async function(){if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){camFallback();return}
- if(!(await permGate("cam")))return;
+Q("phcam").onclick=async function(){var nat=false;try{nat=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform())}catch(e){}
+ /* no celular: o app de câmera do próprio Android tira a foto e devolve só a imagem, sem permissão de câmera no Sigillum */
+ if(nat||!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){camFallback();return}
  try{CAMS=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user"},audio:false});Q("phvid").srcObject=CAMS;Q("phmenu").hidden=true;Q("phcamv").hidden=false;try{Q("phvid").play()}catch(e){}}catch(e){camFallback()}};
 Q("phsnap").onclick=function(){var v=Q("phvid");if(!v.videoWidth)return;saveFoto(v,v.videoWidth,v.videoHeight)};
 Q("phcamcl").onclick=function(){stopCam();Q("phmenu").hidden=false;Q("phcamv").hidden=true};
