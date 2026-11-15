@@ -6,6 +6,9 @@ import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
 import androidx.core.app.NotificationManagerCompat;
+import com.google.android.play.core.review.ReviewInfo;
+import com.google.android.play.core.review.ReviewManager;
+import com.google.android.play.core.review.ReviewManagerFactory;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.PermissionState;
 import com.getcapacitor.Plugin;
@@ -106,6 +109,21 @@ public class PermsPlugin extends Plugin {
             call.resolve();
         } catch (Exception e) {
             call.reject("não abriu", e);
+        }
+    }
+
+    /** Janela de avaliação da própria Google Play, dentro do app. A Play decide se mostra; o app nunca fica sabendo a nota. */
+    @PluginMethod
+    public void review(PluginCall call) {
+        try {
+            final ReviewManager m = ReviewManagerFactory.create(getContext());
+            m.requestReviewFlow().addOnCompleteListener(t -> {
+                if (!t.isSuccessful() || getActivity() == null) { call.resolve(); return; }
+                ReviewInfo info = t.getResult();
+                m.launchReviewFlow(getActivity(), info).addOnCompleteListener(r -> call.resolve());
+            });
+        } catch (Exception e) {
+            call.resolve();
         }
     }
 

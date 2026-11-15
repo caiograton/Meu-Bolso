@@ -261,6 +261,9 @@ grep -q "androidx.biometric:biometric" "$GRADLE" || { echo "Não foi possível a
 sed -i '0,/^dependencies {/s//dependencies {\n    implementation "com.google.android.gms:play-services-nearby:19.3.0"\n    implementation "com.google.android.gms:play-services-code-scanner:16.1.0"/' "$GRADLE"
 grep -q "play-services-nearby" "$GRADLE" || { echo "Não foi possível adicionar a dependência do Nearby"; exit 1; }
 grep -q "play-services-code-scanner" "$GRADLE" || { echo "Não foi possível adicionar o leitor de QR"; exit 1; }
+# Janela de avaliação da Google Play dentro do app
+grep -q "com.google.android.play:review" "$GRADLE" || sed -i '0,/^dependencies {/s//dependencies {\n    implementation "com.google.android.play:review:2.0.2"/' "$GRADLE"
+grep -q "com.google.android.play:review" "$GRADLE" || { echo "Não foi possível adicionar a avaliação da Play"; exit 1; }
 
 MANIFEST="android/app/src/main/AndroidManifest.xml"
 if ! grep -q "USE_BIOMETRIC" "$MANIFEST"; then
@@ -398,5 +401,9 @@ if ! grep -q "QuickWidgetConfigActivity" "$MANIFEST"; then
   sed -i '0,/<\/application>/s//    <activity android:name="com.caiograton.meubolso.QuickWidgetConfigActivity" android:exported="true" android:label="Sigillum" android:theme="@style\/AppTheme.NoActionBar">\n            <intent-filter>\n                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" \/>\n            <\/intent-filter>\n        <\/activity>\n    <\/application>/' "$MANIFEST"
 fi
 grep -q "QuickWidgetConfigActivity" "$MANIFEST" || { echo "Não foi possível registrar a tela do widget"; exit 1; }
+# O app fica sempre em pé (retrato), no celular e na tela do widget
+grep -q 'screenOrientation="portrait"' "$MANIFEST" || sed -i -E 's/(android:name="[^"]*MainActivity")/\1 android:screenOrientation="portrait"/' "$MANIFEST"
+sed -i -E 's/(android:name="com\.caiograton\.meubolso\.QuickWidgetConfigActivity")( android:exported)/\1 android:screenOrientation="portrait"\2/' "$MANIFEST"
+[ "$(grep -c 'screenOrientation="portrait"' "$MANIFEST")" -ge 2 ] || { echo "Não foi possível travar a tela em pé"; exit 1; }
 
 echo "Personalizações nativas aplicadas."
