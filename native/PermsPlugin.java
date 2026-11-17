@@ -127,6 +127,19 @@ public class PermsPlugin extends Plugin {
         }
     }
 
+    /** Código do aparelho do Android (ANDROID_ID). O app só usa uma versão embaralhada dele, para reconhecer extratos gerados neste celular. */
+    @PluginMethod
+    public void devId(PluginCall call) {
+        JSObject r = new JSObject();
+        try {
+            String id = Settings.Secure.getString(getContext().getContentResolver(), Settings.Secure.ANDROID_ID);
+            r.put("id", id == null ? "" : id);
+        } catch (Exception e) {
+            r.put("id", "");
+        }
+        call.resolve(r);
+    }
+
     /** Abre a página do Sigillum na Play Store (app da loja ou navegador). */
     @PluginMethod
     public void openStore(PluginCall call) {
