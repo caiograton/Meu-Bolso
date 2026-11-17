@@ -2753,6 +2753,7 @@ function plPlans(){return rules.filter(function(r){return r.plan&&(r.end==null||
    Só aparece quando o saldo do extrato não fecha (ou o arquivo não tem saldo). Linhas suspeitas vêm primeiro,
    o app refaz a conta a cada linha tirada, e a revisão só termina com a confirmação no fim da lista.
    Tirar uma linha aqui apaga o lançamento que a importação criou; Desfazer o devolve. */
+function imTyp(t){var s=String(t||"").toLowerCase().replace(/\s+/g," ").trim();s=s.replace(/\b(pix|qr|ted|doc|iof|tef|sepa)\b/g,function(w){return w.toUpperCase()});return s.charAt(0).toUpperCase()+s.slice(1)}
 function imNoName(d){d=String(d||"").trim();return !d||d==="Lançamento"||!/[A-Za-zÀ-ÿ]{2}/.test(d)}
 var IMSUSL={n:"Sem nome · parece o saldo",b:"Valor igual ao saldo da conta",d:"Linha repetida no arquivo"};
 var IMSAL=/^(saldo|balance)\b|\bsaldo (anterior|do dia|final|disponivel|total|em conta|atual)\b|\b(opening|closing|available) balance\b/;
@@ -2788,7 +2789,7 @@ function imRevRender(){var it=IM.items,n=it.length,dn=0,su=0,good=0,cu=IM.res.cu
  h+='<div class="box rvend"><label class="rvcb"><input type="checkbox" id="rvcf"'+(IM.cf?" checked":"")+'><span>'+esc(TT("Conferi todas as linhas com o meu extrato"))+'</span></label><div class="info" style="margin:6px 0 0">'+esc(dn===n?TT("Todas as linhas foram revisadas."):TF(n-dn===1?"Falta {n} linha para revisar.":"Faltam {n} linhas para revisar.",{n:n-dn}))+'</div></div>';
  var b=Q("imb"),st=b.scrollTop;b.innerHTML=h;b.scrollTop=st;var ok=Q("imok");ok.textContent=TT("Concluir revisão");ok.disabled=!(dn===n&&IM.cf);rvSwipe();rvStk()}
 function imRvRow(x,i){var d=exParse(x.tx.date),wd=d.toLocaleDateString(LOC,{weekday:"short"}).replace(".",""),has=!!(x.name||!imNoName(x.tx.desc)),nm=has?(x.name||x.tx.desc):TT("Sem identificação");
- var sub=x.rm?'<small class="rvund">'+esc(TT("Removido"))+' · <u>'+esc(TT("Desfazer"))+'</u></small>':(x.sus?'<small class="rvsus">⚠ '+esc(TT(IMSUSL[x.sus]))+'</small>':'<small>'+esc(TT(x.t==="e"?"Entrada":"Saída"))+(x.old?' · '+esc(TT("importada antes")):'')+'</small>');
+ var sub=x.rm?'<small class="rvund">'+esc(TT("Removido"))+' · <u>'+esc(TT("Desfazer"))+'</u></small>':(x.sus?'<small class="rvsus">⚠ '+esc(TT(IMSUSL[x.sus]))+'</small>':'<small>'+esc(x.tx.typ?imTyp(x.tx.typ):TT(x.t==="e"?"Entrada":"Saída"))+(x.old?' · '+esc(TT("importada antes")):'')+'</small>');
  return'<div class="rvw" data-rvw="'+i+'" data-lb="'+esc(TT("Não lançar"))+'"><div class="item imit rvrow'+(x.sus&&!x.rm?" rvs":"")+(x.rm?" rvrm":"")+'" data-rvi="'+i+'"><button type="button" class="rvhit" data-rck="'+i+'" aria-pressed="'+(x.rv?"true":"false")+'" aria-label="'+esc(TT(x.rm?"Restaurar":"Conferida"))+'"><span class="imck'+(x.rv?" on":"")+(x.rm?" rvx":"")+'">'+(x.rm?"×":"")+'</span></button><div class="dia"><b>'+d.getDate()+'</b><span>'+esc(wd)+'</span></div><div class="desc"><b'+(has?'':' class="rvnn"')+'>'+esc(nm)+'</b>'+sub+'</div><div class="val '+(x.t==="e"?"in":"out")+'">'+esc(imFmt(x))+'</div></div></div>'}
 function rvStk(){var b=document.querySelector("#imb .rvbar"),c=Q("imb");if(!b||!c)return;var cr=c.getBoundingClientRect();b.classList.toggle("stk",cr.height>0&&c.scrollTop>0&&b.getBoundingClientRect().top-cr.top<=40)}
 try{Q("imb").addEventListener("scroll",rvStk,{passive:true})}catch(e){}
@@ -3717,7 +3718,7 @@ function vcMSave(){var its=[].slice.call(document.querySelectorAll("#vcm .vcm-it
 /* ===== Importar extrato e regras automáticas ===== */
 var IM=null,IMBUSY=false,IMSUBQ=null,ARED=null;
 /*LEITORES:INI*/
-var LEITORES_V="extrato-0-avisos-1-7407178d";
+var LEITORES_V="extrato-0-avisos-3-b15bee59";
 /* Sigillum · motor de leitura de extratos.
    Lê CSV, Excel (.xlsx), OFX e PDF (AIB, Revolut, Wise e leitor genérico) dentro do aparelho.
    Não guarda nada e não acessa a rede: recebe o arquivo, devolve as linhas.
@@ -3863,16 +3864,52 @@ function imWise(lines){var AMT=/^\s*(\S.*?)\s{2,}(-?[\d,]+\.\d{2})\s+([\d,]+\.\d
   else if(m=h.match(/^Paid to (.*)$/))ds=m[1];
   else if(m=h.match(/^Converted ([\d,.]+) (\w+) to ([\d,.]+) (\w+)/))ds="Converted "+m[1]+" "+m[2]+" → "+m[3]+" "+m[4];
   var ow={date:r.iso,desc:ds.replace(/\s+/g," ").trim(),amt:r.amt,cur:cu,id:r.id||""};if(!isNaN(r.bal))ow.bal=r.bal;return ow})}
-function imGenericPdf(lines,tpl){var out=[],AM="-?\\(?[\\d.,]+\\)?",ds=[];
- var RX=new RegExp("^\\s*(\\d{1,2}[\\/.\\-]\\d{1,2}[\\/.\\-]\\d{2,4}|\\d{4}-\\d{2}-\\d{2}|\\d{1,2} [A-Za-z]{3,} \\d{4})\\s+(.+?)\\s{1,}("+AM+")(?:\\s+("+AM+"))?\\s*$"),hits=[];
- lines.forEach(function(ln){var m=ln.match(RX);if(m)hits.push(m)});
- hits.forEach(function(m){ds.push(m[1])});
- var mdy=tpl?!!tpl.mdy:imMdy([ds]),nb=0;
- hits.forEach(function(m){var d=imDate(m[1],mdy),a=imNum(m[3]);if(!d||isNaN(a)||Math.abs(a)<0.005)return;if(!/[.,]\d{2}\)?$/.test(m[3].trim()))return;
-  var o={date:d.iso,desc:m[2].replace(/\s+/g," ").trim(),amt:a,cur:"",id:""};
-  if(m[4]&&/[.,]\d{2}\)?$/.test(m[4].trim())){var b=imNum(m[4]);if(!isNaN(b)){o.bal=b;nb++}}
+/* Leitor genérico de PDF. As colunas chegam separadas por 3 ou mais espaços.
+   - Linha com data e só um valor, sem texto: é o saldo do dia (vários bancos, ex.: Itaú), não um lançamento.
+     Esse saldo vira âncora de conferência do lançamento mais recente até aquele dia, e o sinal (que alguns PDFs não mostram) sai da continuidade dos dias.
+   - Número sem centavos no meio do nome ("PARKING 667", "LOJA 6") é texto, não valor.
+   - Quando há uma coluna de tipo (Lançamentos, Histórico...) e outra de Descrição, o nome é a descrição e o tipo fica em "typ".
+   - Linha seguinte só com texto em maiúsculas (sem data e sem valor) completa a descrição que quebrou em duas linhas. */
+function imGenericPdf(lines,tpl){var out=[],AM="-?\\(?[\\d.,]+\\)?",ds=[],CEN=/^-?\(?[-+]?(?:R\$|€|\$|£)?\s?-?\d{1,3}(?:[.,\s]\d{3})*[.,]\d{2}\)?(?:\s?[CD])?$/,
+ DT=/^\s*(\d{1,2}[\/.\-]\d{1,2}[\/.\-]\d{2,4}|\d{4}-\d{2}-\d{2}|\d{1,2} [A-Za-z]{3,} \d{4})\b\s*(.*)$/,
+ RX=new RegExp("^\\s*(\\d{1,2}[\\/.\\-]\\d{1,2}[\\/.\\-]\\d{2,4}|\\d{4}-\\d{2}-\\d{2}|\\d{1,2} [A-Za-z]{3,} \\d{4})\\s+(.+?)\\s{1,}("+AM+")(?:\\s+("+AM+"))?\\s*$"),
+ HDR=/\b(date|data|fecha|datum)\b.*\b(descri|detail|histor|lancamento|movimento|transac|concepto|memo|narrat|valor|amount|importe)/,hasBalCol=false,typCol=false,hcur="";
+ lines.forEach(function(ln){var n=imNorm(ln);if(HDR.test(n)){if(!hcur){var cm=String(ln).match(/\((R\$|US\$|€|£|EUR|BRL|GBP|USD)\)/);if(cm)hcur={"R$":"BRL","US$":"USD","€":"EUR","£":"GBP"}[cm[1]]||cm[1]}if(/\b(saldo|balance|solde|kontostand)\b/.test(n))hasBalCol=true;if(/\b(lancamentos?|historico|tipo|type|movimento)\b/.test(n)&&/\bdescri/.test(n))typCol=true}});
+ var rows=[],last=null;
+ lines.forEach(function(ln){var dm=ln.match(DT);
+  if(!dm){/* continuação da descrição */
+   var t=String(ln).trim();if(last&&last.kind==="tx"&&t&&t.length<=50&&!/\s{3,}/.test(t)&&t===t.toUpperCase()&&/[A-ZÀ-Ý]{2}/.test(t)&&!CEN.test(t)&&!HDR.test(imNorm(t))&&last.cont<2){last.cont++;
+    if(last.typ&&/^(CODE|QR CODE)$/.test(t)&&/\bQR$/.test(last.typ))last.typ+=" "+t;else last.desc=(last.desc+" "+t).trim()}
+   else last=last&&last.kind==="tx"?{kind:"x"}:last;return}
+  var rest=dm[2]||"",seg=rest.split(/\s{3,}/).map(function(x){return x.trim()}).filter(Boolean),am=[];
+  while(seg.length&&CEN.test(seg[seg.length-1].replace(/\s+/g,""))){am.unshift(seg.pop())}
+  if(!seg.length&&am.length===1&&hasBalCol){rows.push(last={kind:"bal",ds:dm[1],v:am[0]});ds.push(dm[1]);return}
+  if(seg.length&&am.length){var typ="",desc=seg.join(" ");if(typCol&&seg.length>=2){typ=seg[0];desc=seg.slice(1).join(" ")}
+   rows.push(last={kind:"tx",ds:dm[1],desc:desc,typ:typ,v:am[0],b:am[1]||"",cont:0});ds.push(dm[1]);return}
+  /* sem colunas bem separadas: volta à leitura antiga, com o conserto do número solto no nome */
+  var m=ln.match(RX);if(!m){last=null;return}
+  var v=m[3],b=m[4]||"",d=m[2];if(!/[.,]\d{2}\)?$/.test(v.trim())&&b&&/[.,]\d{2}\)?$/.test(b.trim())){d=d+" "+v;v=b;b=""}
+  rows.push(last={kind:"tx",ds:m[1],desc:d,typ:"",v:v,b:b,cont:0});ds.push(m[1])});
+ var mdy=tpl?!!tpl.mdy:imMdy([ds]),nb=0,bals=[];
+ rows.forEach(function(r){var d=imDate(r.ds,mdy);if(!d)return;
+  if(r.kind==="bal"){var bv=imNum(r.v);if(!isNaN(bv))bals.push({pos:out.length,iso:d.iso,v:bv,neg:/^-|\(|\bD$/.test(r.v.trim())});return}
+  var a=imNum(r.v);if(isNaN(a)||Math.abs(a)<0.005)return;if(!/[.,]\d{2}\)?(?:\s?[CD])?$/.test(String(r.v).trim()))return;
+  var o={date:d.iso,desc:String(r.desc).replace(/\s+/g," ").trim(),amt:a,cur:hcur,id:""};if(r.typ)o.typ=r.typ.replace(/\s+/g," ").trim();
+  if(r.b&&/[.,]\d{2}\)?$/.test(r.b.trim())){var b=imNum(r.b);if(!isNaN(b)){o.bal=b;nb++}}
   out.push(o)});
- out.tpl={mdy:mdy,bal:out.length>0&&nb>=out.length*0.6};return out}
+ /* saldos do dia: cada um vai para o lançamento mais recente até aquele dia */
+ var nAnc=0;if(bals.length&&out.length){var desc=out.length>1&&out[0].date>out[out.length-1].date;
+  bals.forEach(function(B){var i=desc?B.pos:B.pos-1;if(i<0||i>=out.length||out[i].date>B.iso||typeof out[i].bal==="number")return;out[i].bal=B.v;out[i].balAbs=!B.neg;nAnc++});
+  /* sinal do saldo pela continuidade (alguns PDFs mostram o saldo negativo sem o "-") */
+  var ch=desc?out.slice().reverse():out.slice(),an=[];ch.forEach(function(x,k){if(typeof x.bal==="number")an.push(k)});
+  if(an.length>=2){var best=null;[1,-1].forEach(function(s0){var sg=[],miss=0;an.forEach(function(k,j){var x=ch[k],v=Math.abs(x.bal);
+     if(!x.balAbs){sg.push(x.bal);if(j>0){var e0=sg[j-1];for(var q0=an[j-1]+1;q0<=k;q0++)e0+=ch[q0].amt;if(Math.abs(e0-x.bal)>0.015)miss++}return}
+     if(j===0){sg.push(s0*v);return}var e=sg[j-1];for(var q=an[j-1]+1;q<=k;q++)e+=ch[q].amt;
+     if(Math.abs(e-v)<0.015)sg.push(v);else if(Math.abs(e+v)<0.015)sg.push(-v);else{sg.push(x.bal);miss++}});
+    if(!best||miss<best.miss)best={miss:miss,sg:sg}});
+   an.forEach(function(k,j){ch[k].bal=Math.round(best.sg[j]*100)/100})}
+  out.forEach(function(x){delete x.balAbs})}
+ out.tpl={mdy:mdy,bal:out.length>0&&(nb>=out.length*0.6||(hasBalCol&&nAnc>=2))};return out}
 /* conferência de saldo: confere se saldo anterior + movimentos = saldo seguinte, linha a linha */
 function imBalCheck(tx){var n=tx.length,best=null;
  [false,true].forEach(function(rev){var q=rev?tx.slice().reverse():tx.slice(),an=[];q.forEach(function(x,i){if(typeof x.bal==="number"&&!isNaN(x.bal))an.push(i)});
@@ -3958,7 +3995,7 @@ function auConhecido(pkg,f){var a=AUAPPS.filter(function(x){return x.p===pkg})[0
 function auLer(pkg,title,text){var a=AUAPPS.filter(function(x){return x.p===pkg})[0],n=a?a.n:"",r=(a&&a.r==="wallet"?auWallet:auGeneric)(n,title,text);
  if(!r)return null;r.f=auForma(title,text,r);r.k=auConhecido(pkg,r.f);return r}
 var IMBUILTIN=[];
-var AUKNOWN=[{"p":"com.transferwise.android","t":"You just got paid","x":"[nome] sent you [valor]. It's in your account, ready to use.","tipo":"e","em":"2026-11-13"}];
+var AUKNOWN=[{"p":"com.transferwise.android","t":"You just got paid","x":"[nome] sent you [valor]. It's in your account, ready to use.","tipo":"e","em":"2026-11-13"},{"p":"com.transferwise.android","t":"Card payment","x":"[valor] spent at [nome].","tipo":"s","em":"2026-11-14"},{"p":"com.itau","t":"Feito. Pix enviado","x":"Você enviou [valor] para [nome], CNPJ ##.###.###/####-##.","tipo":"s","em":"2026-11-17"}];
 /*LEITORES:FIM*/
 /* PDF gerado pelo próprio Sigillum: confere o selo do conteúdo (HMAC do app) e a assinatura do aparelho */
 async function imMb(PG,L){var all=L.join("\n"),mark=/(Meu Bolso|Sigillum)[^\n]*\b[0-9A-F]{4}-[0-9A-F]{4}\b/.test(all),a=PG.att;
@@ -3993,7 +4030,7 @@ async function imRead(f){if(f.size>25e6)throw 0;var nm=f.name||"",ext=(nm.split(
  else if(ext==="xlsx"){tx=imTable(await imXlsx(buf))}
  else if(ext==="xls")throw"xls";
  else{var t=imDecode(buf);if(/<OFX>|OFXHEADER|<STMTTRN>/i.test(t.slice(0,4000))||ext==="ofx"||ext==="qfx")tx=imOfx(t);else tx=imTable(imCsv(t))}
- if(!tx||!tx.length)throw"none";return{tx:tx,label:label,cur:cur,exp:exp,tpl:tpl,sig:sig,gen:tx.tpl||null}}
+ if(!tx||!tx.length)throw"none";if(!cur&&tx[0].cur&&tx.every(function(x){return x.cur===tx[0].cur}))cur=tx[0].cur;return{tx:tx,label:label,cur:cur,exp:exp,tpl:tpl,sig:sig,gen:tx.tpl||null}}
 function imMinutes(t){if(!t)return null;var p=String(t).split(":");return Number(p[0])*60+Number(p[1])}
 function imDayN(iso){var p=iso.split("-");return Date.UTC(Number(p[0]),Number(p[1])-1,Number(p[2]))/864e5}
 function imRuleFor(desc,t){var n=imNorm(desc),best=null;ARULES.forEach(function(r){if(r.t!==t)return;var k=imNorm(r.txt);if(k&&n.indexOf(k)>=0&&(!best||k.length>imNorm(best.txt).length))best=r});return best}
@@ -4023,7 +4060,7 @@ function imRow(it,i){var d=exParse(it.tx.date),wd=d.toLocaleDateString(LOC,{week
  else if(it.conv&&!it.sel)sub='<small class="imst">'+esc(TT("Câmbio entre contas · não será importado"))+'</small>';
  else if(!it.sel)sub='<small class="imst">'+esc(TT(it.ign?"Não será importado · regra deste banco":"Não será importado"))+'</small>';
  else if(it.cat||it.sub)sub='<small>'+imChip(it)+(it.rule?'<span class="fx" style="margin-left:0">'+esc(TT("regra"))+'</span>':'')+'</small>';
- else sub='<small>'+esc(TT("Toque para categorizar"))+'</small>';
+ else sub='<small>'+(it.tx.typ?esc(imTyp(it.tx.typ))+' · ':'')+esc(TT("Toque para categorizar"))+'</small>';
  if(it.fix&&it.sel)sub=sub.replace(/<\/small>$/,'<span class="fx" style="margin-left:6px">'+esc(TT("fixo"))+'</span></small>');
  var dp=it.match?'<button type="button" class="imdupb'+(it.sel?" on":"")+'" data-dup="'+i+'" aria-label="'+esc(TT("Possível duplicado"))+'">'+IMDUP+'</button>':"";
  var rk=IM.rev?'<button type="button" class="imck'+(it.rv?" on":"")+'" data-rck="'+i+'" aria-pressed="'+(it.rv?"true":"false")+'" aria-label="'+esc(TT("Conferida"))+'"></button>':"";
