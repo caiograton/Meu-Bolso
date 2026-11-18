@@ -210,4 +210,22 @@ public class PermsPlugin extends Plugin {
             call.reject("sem app de e-mail", e);
         }
     }
+
+    /** Apaga todos os dados do app neste aparelho (armazenamento, preferências, chaves). O Android fecha o app em seguida. */
+    @PluginMethod
+    public void clearData(PluginCall call) {
+        try {
+            android.app.ActivityManager am = (android.app.ActivityManager) getContext().getSystemService(android.content.Context.ACTIVITY_SERVICE);
+            if (am == null) { call.reject("indisponível"); return; }
+            call.resolve();
+            final android.app.ActivityManager fam = am;
+            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
+                @Override public void run() {
+                    try { fam.clearApplicationUserData(); } catch (Exception ignored) {}
+                }
+            }, 250);
+        } catch (Exception e) {
+            call.reject("falhou", e);
+        }
+    }
 }
