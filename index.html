@@ -3771,6 +3771,7 @@ function imDate(v,mdy){if(v==null||v==="")return null;
  if(m=s.match(/^(\d{4})(\d{2})(\d{2})(?:(\d{2})(\d{2})(?:\d{2})?)?(?!\d)/))return imMk(m[1],m[2],m[3],m[4],m[5]);
  if(m=s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})(?:[,\s]+(\d{1,2}):(\d{2}))?/)){return mdy?imMk(m[3],m[1],m[2],m[4],m[5]):imMk(m[3],m[2],m[1],m[4],m[5])}
  if(m=s.match(/^(\d{1,2})\s+([A-Za-zÀ-ÿ]{3,})\.?,?\s+(\d{4})/)){var mo=IMON[imNorm(m[2]).slice(0,3)];if(mo)return imMk(m[3],mo,m[1])}
+ if(m=s.match(/^(\d{1,2})\s+de\s+([A-Za-zÀ-ÿ]{3,})\s+de\s+(\d{4})/)){var mo3=IMON[imNorm(m[2]).slice(0,3)];if(mo3)return imMk(m[3],mo3,m[1])}
  if(m=s.match(/^([A-Za-zÀ-ÿ]{3,})\.?\s+(\d{1,2}),?\s+(\d{4})/)){var mo2=IMON[imNorm(m[1]).slice(0,3)];if(mo2)return imMk(m[3],mo2,m[2])}
  return null}
 function imMdy(rows){var a=false,b=false;rows.forEach(function(r){r.forEach(function(c){var m=typeof c==="string"&&c.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})/);if(m){if(Number(m[1])>12)a=true;if(Number(m[2])>12)b=true}})});return b&&!a}
@@ -3940,7 +3941,12 @@ function imGenericPdf(lines,tpl){var out=[],AM="-?\\(?[\\d.,]+\\)?",ds=[],CEN=/^
   out.forEach(function(x){delete x.balAbs})}
  out.tpl={mdy:mdy,bal:out.length>0&&(nb>=out.length*0.6||(hasBalCol&&nAnc>=2))};return out}
 /* conferência de saldo: confere se saldo anterior + movimentos = saldo seguinte, linha a linha */
-function imBalCheck(tx){var n=tx.length,best=null;
+function imBalCheck(tx){var segs=[],k={};tx.forEach(function(x){var q=x.seg||0;if(!k[q]){k[q]=[];segs.push(k[q])}k[q].push(x)});
+ if(segs.length<2)return imBalCheck1(tx);
+ var rs=segs.map(imBalCheck1).filter(function(r){return r.st!=="none"});if(!rs.length)return{st:"none"};
+ if(rs.every(function(r){return r.st==="ok"}))return{st:"ok",open:rs[0].open,close:rs[rs.length-1].close,secoes:rs.length};
+ var bad=rs.filter(function(r){return r.st==="bad"});return bad.length?{st:"bad",miss:Math.abs(bad[0].miss||0)}:{st:"none"}}
+function imBalCheck1(tx){var n=tx.length,best=null;
  [false,true].forEach(function(rev){var q=rev?tx.slice().reverse():tx.slice(),an=[];q.forEach(function(x,i){if(typeof x.bal==="number"&&!isNaN(x.bal))an.push(i)});
   if(an.length<2)return;var ok=0,tot=0,miss=0;
   for(var k=1;k<an.length;k++){var a=an[k-1],b=an[k],sum=0;for(var j=a+1;j<=b;j++)sum+=q[j].amt;var exp=q[a].bal+sum;tot++;
@@ -3952,6 +3958,83 @@ function imBalCheck(tx){var n=tx.length,best=null;
  if(best.ok===best.tot)return{st:"ok",open:best.open,close:best.close};
  if(best.ok/best.tot>=0.5)return{st:"bad",miss:Math.abs(best.miss)};
  return{st:"none"}}
+/* Leitor de extrato por colunas (parte do leitor genérico). Não usa o nome do banco: acha o cabeçalho da tabela
+   (Data, Descrição, Débito/Crédito ou Valor, Saldo), agrupa os valores pela coluna onde estão e deduz o resto
+   pela estrutura: data na linha, em linha de dia (cabeçalho do dia) ou na linha depois; entrada/saída pela coluna
+   ou pelo sinal; saldo por linha ou por dia. */
+var IMC={DATE:/^(date|data|fecha|datum|data mov\.?|data lancamento|data movimento|booking date)$/,
+ OUT:/^(money out|debit|debito|debitos|saidas?|outgoing|paid out|retiradas?|withdrawals?|debe|ausgang|sortie)$/,
+ IN:/^(money in|credit|credito|creditos|entradas?|incoming|paid in|deposits?|depositos?|haber|eingang|entree)$/,
+ AMT:/^(valor|amount|value|importe|betrag|montant|kwota|importo)(\s*\(.*\))?$/,
+ BAL:/^(saldo|balance|solde|kontostand|saldo por transacao)(\s*\(.*\))?$/,
+ DESC:/^(description|descricao|descripcion|details|detalhes|historico|lancamentos?|concepto|beschreibung|memo|narrative|movimento|transaction|transacao)$/};
+function imColPdf(PG){
+ var AMN="(?:\\d{1,3}(?:[.,\\u00a0 ]\\d{3})+|\\d+)[.,]\\d{2}",AMR=new RegExp("^[-−+]?\\(?(?:R\\$|US\\$|€|\\$|£)?\\s?[-−+]?"+AMN+"\\)?(?:\\s?(?:CR|DR|C|D))?$"),
+  END=/^(saldo\b|total\b|limite\b|informa|aviso\b|posicao|central de|sac\b|ouvidoria|consultas|report lost|get help|scan the|fale com|deficiencia|atendimento|page \d|pagina|©|www\.|http)/,ENDH=/^(saldo\b|total\b|limite\b|informa|aviso\b|posicao)/,
+  rows=[],pairs=[];
+ PG.forEach(function(pg,pi){pg.forEach(function(r){var its=[],a=r.a;
+  for(var i=0;i<a.length;i++){var c=a[i],nx=a[i+1];
+   if(nx&&/^[-−]?(R\$|US\$|€|\$|£)$/.test(c.s.trim())&&AMR.test(nx.s.trim())&&nx.x-(c.x+c.w)<8){its.push({s:c.s.trim()+nx.s.trim(),x:c.x,w:nx.x+nx.w-c.x});i++}
+   else its.push({s:c.s.trim(),x:c.x,w:c.w})}
+  if(its.length)rows.push({pi:pi,its:its,t:its.map(function(i){return i.s}).join(" ")})})});
+ rows.forEach(function(r){var f=r.its[0].s,m=f.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})/);if(m)pairs.push(f)});
+ var mdy=imMdy([pairs]);
+ function role(s){var n=imNorm(s).replace(/[^a-z0-9 ().$]+/g," ").replace(/\s+/g," ").trim();if(!n||n.length>32)return null;var ks=["DATE","OUT","IN","AMT","BAL","DESC"];for(var i=0;i<ks.length;i++)if(IMC[ks[i]].test(n))return ks[i];return null}
+ function dOf(s){var d=imDate(s,mdy);return d?d.iso:null}
+ var hdr=null,inT=false,carry=null,last=null,out=[],bals=[],seg=0,prev="",cur="",after=false,nrow=0,hasD=false;
+ function isHeader(r){var rs={},labs=[];r.its.forEach(function(it){var k=role(it.s);if(k){rs[k]=1;labs.push({k:k,cx:it.x+it.w/2,x:it.x})}});
+  var nk=Object.keys(rs).length,mon=rs.OUT||rs.IN||rs.AMT;if(!mon)return null;
+  if(nk>=3||(nk>=2&&rs.AMT&&rs.BAL&&dOf(r.its[0].s)))return{labs:labs,rs:rs};return null}
+ var lpi=-1,closed=false,skip=false;
+ rows.forEach(function(r){nrow++;var its=r.its,t=r.t,tn=imNorm(t),H=isHeader(r);if(r.pi!==lpi){lpi=r.pi;if(hdr&&!closed)inT=true}
+  if(!cur&&/\b(Debit|Credit|Balance)\s?\x80/.test(t))cur="EUR";
+  if(!cur){var cm=t.match(/\(\s*(R\$|US\$|€|£)\s*\)/);if(cm)cur={"R$":"BRL","US$":"USD","€":"EUR","£":"GBP"}[cm[1]];else{var sm=t.match(/\b([A-Z]{3}) [Ss]tatement\b/);if(sm)cur=sm[1]}}
+  if(H){hdr=H;hasD=!!H.rs.DATE;if(H.rs.OUT||H.rs.IN)H.labs.forEach(function(l){if(l.k==="AMT")l.k="BAL"});
+   skip=/^(reverted|pending|cancel+ed|declined|rejected|failed|pendente|cancelad|recusad)/i.test(prev.trim());if(!skip&&out.length&&/\btransactions?\b.*\bfrom\b/i.test(prev))seg++;inT=true;closed=false;
+   if(!dOf(its[0].s)){prev=t;return}}
+  prev=t;if(!hdr||skip)return;
+  var own=dOf(its[0].s),ownS=own?its[0].s:"";
+  if(!own&&END.test(tn)){inT=false;last=null;if(ENDH.test(tn))closed=true;return}
+  if(own){closed=false;inT=true}if(!inT)return;
+  var am=[],txt=[];
+  its.forEach(function(it,i){if(i===0&&own)return;var rl=null;
+   if(AMR.test(it.s)){var cx=it.x+it.w/2,bd=76;hdr.labs.forEach(function(l){if(l.k==="DATE"||l.k==="DESC")return;var d=Math.abs(l.cx-cx);if(d<bd){bd=d;rl=l.k}})}
+   if(rl)am.push({k:rl,s:it.s});else txt.push(it)});
+  var ta=am.filter(function(a){return a.k!=="BAL"})[0],ba=am.filter(function(a){return a.k==="BAL"})[0];
+  if(ta&&!own){var dd0=txt.map(function(i){return i.s}).join(" ").trim();if(!dd0||/^[A-Za-zÀ-ÿ]{2,12}:/.test(dd0))return}
+  if(ta){var v=imNum(ta.s);if(isNaN(v)||Math.abs(v)<0.005)return;var a=Math.abs(v);
+   var amt=ta.k==="OUT"?-a:ta.k==="IN"?a:v;
+   var o={date:own||(after?null:carry),desc:txt.map(function(i){return i.s}).join(" ").replace(/\s+/g," ").trim()||"Lançamento",amt:Math.round(amt*100)/100,cur:"",id:"",seg:seg,cont:0};
+   if(own)carry=own;
+   if(!cur){var sy=ta.s.match(/R\$|US\$|€|£|\$/);if(sy)o.sym=sy[0]}
+   if(ba){var bv=imNum(ba.s);if(!isNaN(bv)){o.bal=Math.abs(bv);o.balAbs=!/^[-−(]/.test(ba.s.trim())&&!/\bDR?$/.test(ba.s.trim());if(!o.balAbs)o.bal=bv}}
+   out.push(o);last=o;return}
+  if(ba&&own&&!txt.some(function(i){return /[a-zà-ÿ]{3}/i.test(i.s)&&!/^(balance forward|saldo anterior|saldo do dia|saldo)/i.test(imNorm(i.s))})){var bv2=imNum(ba.s);if(!isNaN(bv2)){carry=own;bals.push({pos:out.length,iso:own,v:Math.abs(bv2),neg:/^[-−(]/.test(ba.s.trim())})}return}
+  if(ba&&own){carry=own;var bv3=imNum(ba.s);if(!isNaN(bv3))bals.push({pos:out.length,iso:own,v:Math.abs(bv3),neg:/^[-−(]/.test(ba.s.trim())});return}
+  if(own){if(/\s\|\s/.test(ownS+" "+(its[0]&&t.slice(ownS.length,ownS.length+3)))||/^\S[^|]*\|/.test(t)&&!hasD){after=true;for(var k=out.length-1;k>=0&&k>=out.length-3;k--)if(out[k].date==null){out[k].date=own;break}}else carry=own;return}
+  /* continuação do nome */
+  var ct=txt.map(function(i){return i.s}).join(" ").trim();
+  if(last&&ct&&ct.length<=40&&!/[a-zà-ÿ]/.test(ct)&&!/^[A-Za-zÀ-ÿ ]{2,24}:/.test(ct)&&!/\|/.test(ct)&&last.cont<1&&!isHeader(r)){last.desc=(last.desc+" "+ct).trim();last.cont++}});
+ if(!after)out.forEach(function(o){});
+ var res=[];out.forEach(function(o){if(!o.date)return;var d=imDate(o.date,mdy);if(!d)return;o.date=d.iso;o.cur=cur||({"R$":"BRL","US$":"USD","€":"EUR","£":"GBP","$":"USD"}[o.sym]||"");delete o.sym;delete o.cont;res.push(o)});
+ out=res;var maxSeg=out.reduce(function(m,x){return Math.max(m,x.seg||0)},0);if(!maxSeg)out.forEach(function(x){delete x.seg});
+ var nb=0;out.forEach(function(x){if(typeof x.bal==="number")nb++});
+ /* saldos do dia: cada um vai para o lançamento mais recente até aquele dia (e o sinal do saldo sai da continuidade) */
+ var nAnc=0;if(bals.length&&out.length){var desc=out.length>1&&out[0].date>out[out.length-1].date;
+  bals.forEach(function(B){var i=desc?B.pos:B.pos-1;if(i<0||i>=out.length||out[i].date>B.iso||typeof out[i].bal==="number")return;out[i].bal=B.v;out[i].balAbs=!B.neg;nAnc++})}
+ if(out.length>1){var desc2=out[0].date>out[out.length-1].date,ch=desc2?out.slice().reverse():out.slice(),an=[];ch.forEach(function(x,k){if(typeof x.bal==="number")an.push(k)});
+  if(an.length>=2){var best=null;[1,-1].forEach(function(s0){var sg=[],miss=0;an.forEach(function(k,j){var x=ch[k],v=Math.abs(x.bal);
+     if(x.balAbs===false){sg.push(x.bal);return}
+     if(j===0||ch[k].seg!==ch[an[j-1]].seg){sg.push(s0*v);return}var e=sg[j-1];for(var q=an[j-1]+1;q<=k;q++)e+=ch[q].amt;
+     if(Math.abs(e-v)<0.015)sg.push(v);else if(Math.abs(e+v)<0.015)sg.push(-v);else{sg.push(v);miss++}});
+    if(!best||miss<best.miss)best={miss:miss,sg:sg}});
+   an.forEach(function(k,j){ch[k].bal=Math.round(best.sg[j]*100)/100})}}
+ out.forEach(function(x){delete x.balAbs});
+ out.tpl={mdy:mdy,bal:out.length>0&&nb>=out.length*0.6};return out}
+/* Escolhe entre o leitor de linhas (o antigo) e o de colunas: vale o que fecha o saldo; se empatar, o que leu mais linhas. */
+function imGenericBest(PG,L,tpl){var o=[],n=[];try{o=imGenericPdf(L,tpl)}catch(e){o=[]}try{n=imColPdf(PG)}catch(e){n=[]}
+ var sc=function(x){if(!x.length)return-1;var s=imBalCheck(x).st;return s==="ok"?2:s==="bad"?0:1};
+ var so=sc(o),sn=sc(n);if(sn>so||(sn===so&&sn>=1&&n.length>=o.length*0.9)||(sn===so&&n.length>o.length*1.05))return n;return o}
 function imSig(lines){var HD=/\b(date|data|fecha|datum)\b.*\b(descri|detail|histor|lancamento|movimento|transac|concepto|memo|narrat|valor|amount|debit|credit|importe)/;
  for(var i=0;i<Math.min(lines.length,400);i++){var l=imNorm(lines[i]);if(!HD.test(l))continue;var w=[];l.split(/[^a-z]+/).forEach(function(x){if(x.length>=3&&w.indexOf(x)<0)w.push(x)});if(w.length>=3)return w.slice(0,8)}
  return null}
@@ -4056,9 +4139,10 @@ async function imRead(f){if(f.size>25e6)throw 0;var nm=f.name||"",ext=(nm.split(
   else if(/Ita\u00fa|itau\.com/i.test(all)&&/Extrato conta corrente/.test(all)&&/Lan\u00e7amentos\s+Descri\u00e7\u00e3o\s+Valor/.test(all)){tx=imItau(PG);cur="BRL";label="Itaú"}
   else if(/Banco Inter/.test(all)&&/Saldo do dia/.test(all)){tx=imInter(L);cur="BRL";label="Banco Inter"}
   else if(/Allied Irish Banks/.test(all)&&/Date\s+Details\s+Debit/.test(all)){tx=imAib(PG);cur="EUR";label="AIB EUR"}
-  else{var lay=imLayFind(L);tx=null;
-   if(lay){var t2=imGenericPdf(L,lay);if(t2.length&&imBalCheck(t2).st!=="bad"){tx=t2;tpl=lay;if(lay.banco)label=lay.banco}}
-   if(!tx){tx=imGenericPdf(L);sig=imSig(L)}exp=true}}
+  /* sem leitor próprio, ou o leitor próprio não achou nada (formato novo do mesmo banco): vai para o leitor genérico */
+  if(!tx||!tx.length){label=nm.replace(/\.[^.]+$/,"");cur="";var lay=imLayFind(L);tx=null;
+   if(lay){var t2=imGenericBest(PG,L,lay);if(t2.length&&imBalCheck(t2).st!=="bad"){tx=t2;tpl=lay;if(lay.banco)label=lay.banco}}
+   if(!tx){tx=imGenericBest(PG,L);sig=imSig(L)}exp=true}}
  else if(ext==="xlsx"){tx=imTable(await imXlsx(buf))}
  else if(ext==="xls")throw"xls";
  else{var t=imDecode(buf);if(/<OFX>|OFXHEADER|<STMTTRN>/i.test(t.slice(0,4000))||ext==="ofx"||ext==="qfx")tx=imOfx(t);else tx=imTable(imCsv(t))}
