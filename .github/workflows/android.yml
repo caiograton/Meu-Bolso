@@ -45,6 +45,7 @@ jobs:
         run: |
           if [ -f leitores/package.json ]; then
             (cd leitores && npm test)
+            node leitores/ferramentas/conferir-app.mjs www/index.html
             node native/inject-leitores.cjs www/index.html leitores/dist/leitores.js
           else
             echo "::warning::Sem acesso ao sigillum-leitores (segredo LEITORES_TOKEN). Usando a cópia dos leitores que está no index.html."
