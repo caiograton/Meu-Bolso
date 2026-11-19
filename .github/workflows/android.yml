@@ -50,6 +50,9 @@ jobs:
             echo "::warning::Sem acesso ao sigillum-leitores (segredo LEITORES_TOKEN). Usando a cópia dos leitores que está no index.html."
           fi
 
+      - name: Conferir que o app não chama função que os leitores não têm
+        run: node native/check-refs.cjs www/index.html
+
       - name: Embutir a fonte no app (sem pedir nada ao Google)
         run: |
           node native/embed-font.cjs
