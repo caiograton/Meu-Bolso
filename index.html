@@ -4053,6 +4053,7 @@ async function imRead(f){if(f.size>25e6)throw 0;var nm=f.name||"",ext=(nm.split(
   if(/Wise|TransferWise/.test(all)&&/Transaction: /.test(all)){tx=imWise(L);cur=(all.match(/\b([A-Z]{3}) [Ss]tatement\b/)||[])[1]||"";label="Wise"+(cur?" "+cur:"")}
   else if(/Revolut/.test(all)&&/Date\s+Description\s+Money out/.test(all)){tx=imRevolut(PG);cur=((all.match(/\b([A-Z]{3}) Statement\b/)||[])[1])||"EUR";label="Revolut "+cur;tx.forEach(function(x){x.cur=cur})}
   else if(/Santander/.test(all)&&/Hist[óo]rico\s+Documento\s+Valor/.test(all)){tx=imSantander(L);cur="BRL";label="Santander"}
+  else if(/Ita\u00fa|itau\.com/i.test(all)&&/Extrato conta corrente/.test(all)&&/Lan\u00e7amentos\s+Descri\u00e7\u00e3o\s+Valor/.test(all)){tx=imItau(PG);cur="BRL";label="Itaú"}
   else if(/Banco Inter/.test(all)&&/Saldo do dia/.test(all)){tx=imInter(L);cur="BRL";label="Banco Inter"}
   else if(/Allied Irish Banks/.test(all)&&/Date\s+Details\s+Debit/.test(all)){tx=imAib(PG);cur="EUR";label="AIB EUR"}
   else{var lay=imLayFind(L);tx=null;
@@ -4074,6 +4075,22 @@ function imInter(L){var out=[],cur="",pend="",H=/^(\d{1,2}) de ([A-Za-z\u00c0-\u
 function imSantander(L){var out=[],R=/^(\d{2})\/(\d{2})\/(\d{4})\s+(.*?)\s+(\d{6})\s+(-?[\d.]+,\d{2})(?:\s+(-?[\d.]+,\d{2}))?\s*$/,N=function(v){return Number(v.replace(/\./g,"").replace(",","."))};
  L.forEach(function(t){var m=t.match(R);if(!m)return;var k=imMk(m[3],m[2],m[1]);if(!k)return;var a=N(m[6]);if(isNaN(a))return;
   var ob={date:k.iso,desc:m[4].replace(/\s+/g," ").trim()||"Lançamento",amt:a,cur:"BRL",id:""};if(m[7]){var b=N(m[7]);if(!isNaN(b))ob.bal=b}out.push(ob)});
+ return out}
+function imItau(pages){var out=[],last=null,AM=/^-?[\d.]+,\d{2}$/,DT=/^(\d{2})\/(\d{2})\/(\d{4})$/;
+ pages.forEach(function(rows){var cx=null;last=null;
+  rows.forEach(function(r){var t=r.t,it=r.a;
+   if(/^Data\s+Lan\u00e7amentos\s+Descri\u00e7\u00e3o\s+Valor/.test(t)){var c={};it.forEach(function(i){var k=i.s.trim();if(k==="Lan\u00e7amentos")c.t=i.x;else if(k==="Descri\u00e7\u00e3o")c.d=i.x});if(c.t!=null&&c.d!=null)cx=c;return}
+   if(!cx)return;
+   if(/^Saldo\b|^Valor\b|^Limite|^Informa\u00e7\u00f5es adicionais|^Aviso/.test(t)){cx=null;return}
+   var dm=it[0]&&it[0].x<cx.t-10&&it[0].s.match(DT);if(!dm&&it[0]&&it[0].x<cx.t-10){cx=null;last=null;return}
+   var typ=[],ds=[],am=null;
+   it.forEach(function(i,n){if(dm&&n===0)return;var s=i.s.trim();if(AM.test(s)&&i.x>cx.d+60){if(i.x<cx.d+160||dm&&it.length>2)am=am||s;else if(!dm){}return}
+    if(i.x>=cx.d-3)ds.push(s);else if(i.x>=cx.t-3)typ.push(s)});
+   if(dm){if(!typ.length&&!ds.length)return;var k=imMk(dm[3],dm[2],dm[1]);if(!k||am==null)return;var a=Number(am.replace(/\./g,"").replace(",","."));
+    last={date:k.iso,desc:"",amt:a,cur:"BRL",id:"",typ:typ.join(" "),ds:ds.join(" ")};out.push(last)}
+   else if(last){if(typ.length)last.typ+=" "+typ.join(" ");if(ds.length)last.ds+=" "+ds.join(" ")}});
+  });
+ out.forEach(function(x){x.desc=(x.typ+(x.ds?": "+x.ds:"")).replace(/\s+/g," ").trim()||"Lançamento";delete x.typ;delete x.ds});
  return out}
 function imMinutes(t){if(!t)return null;var p=String(t).split(":");return Number(p[0])*60+Number(p[1])}
 function imDayN(iso){var p=iso.split("-");return Date.UTC(Number(p[0]),Number(p[1])-1,Number(p[2]))/864e5}
