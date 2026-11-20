@@ -646,6 +646,7 @@ nav .tt{position:relative;display:inline-block}
 #ob .obtip::before{left:var(--ax,40px);right:auto}
 #ob .obcur .oblk{min-width:76px;text-align:right;padding-right:0}
 #ob .obpm+.obtip+.obcur,#ob .obpm+.obcur{margin-top:0}
+.olist.flo{box-shadow:0 10px 26px rgba(0,0,0,.28);background:var(--bg)}.sheet:not(.cfs) .olist.flo{background:var(--card)}.olist.flo.flup{box-shadow:0 -10px 26px rgba(0,0,0,.28)}.olist.flo .lopt:first-child{margin-top:0}
 </style>
 </head>
 <body>
@@ -5089,6 +5090,43 @@ function gPer(falta,dl){var T=gTime(dl);if(!T||T.f<1)return falta;return falta/T
 function gDur(T){if(!T)return"";var a=T.m?(T.m===1?TT("1 mês"):TF("{n} meses",{n:T.m})):"",b=T.d?(T.d===1?TT("1 dia"):TF("{n} dias",{n:T.d})):"";if(a&&b)return TF("{a} e {b}",{a:a,b:b});return a||b||TT("hoje")}
 function gSaveLine(per,T){return T&&T.f<1?H_("Guarde {v} até o prazo ({t}).",{v:"<b>"+esc(eur.format(per))+"</b>",t:esc(gDur(T))}):H_("Guarde {v} por mês ({t}).",{v:"<b>"+esc(eur.format(per))+"</b>",t:esc(gDur(T))})}
 var _pickCal=pickCal;pickCal=function(){var r=_pickCal.apply(this,arguments);try{if(Q("gbg")&&Q("gbg").classList.contains("open"))gmUpd()}catch(e){}return r};
+
+/*v0265 listas flutuantes: toda lista .olist logo depois de um .obar abre por cima do conteúdo*/
+(function(){
+ var ORD=0;
+ function vis(e){return e&&!e.hidden&&e.isConnected&&e.getClientRects().length>0}
+ function pairs(){var r=[];[].forEach.call(document.querySelectorAll(".obar + .olist"),function(l){if(vis(l))r.push(l)});return r}
+ function place(l){var b=l.previousElementSibling;if(!b)return;var r=b.getBoundingClientRect();
+  if(r.bottom<0||r.top>innerHeight){l._flo=0;b.click();return}
+  var s=l.style;s.position="fixed";s.margin="0";s.zIndex="60";s.left="0px";s.top="0px";s.right="auto";s.bottom="auto";s.overflowY="auto";s.maxHeight="none";s.width=r.width+"px";s.boxSizing="border-box";
+  var o=l.getBoundingClientRect();var dx=o.left,dy=o.top;/* compensa um ancestral que vire referência do fixed */
+  var full=l.scrollHeight,vh=innerHeight,pad=10,gap=6;
+  var below=vh-r.bottom-gap-pad,above=r.top-gap-pad-(window.SBT||24);
+  var up=below<Math.min(full,220)&&above>below;
+  var mh=Math.max(120,Math.min(320,up?above:below));var h=Math.min(full,mh);
+  s.maxHeight=mh+"px";s.left=(r.left-dx)+"px";
+  s.top=((up?r.top-gap-h:r.bottom+gap)-dy)+"px";
+  l.classList.add("flo");l.classList.toggle("flup",up)}
+ function upd(){var ls=pairs();ls.forEach(function(l){if(!l._flo){l._flo=++ORD}});
+  if(ls.length>1){ls.sort(function(a,b){return b._flo-a._flo});ls.slice(1).forEach(function(l){var b=l.previousElementSibling;l._flo=0;if(b)b.click()});ls=pairs()}
+  ls.forEach(place);
+  [].forEach.call(document.querySelectorAll(".olist.flo"),function(l){if(!vis(l)){l._flo=0}})}
+ var pend=0;function sch(){if(pend)return;pend=requestAnimationFrame(function(){pend=0;upd()})}
+ window.flUpd=sch;
+ function closeAll(){var ls=pairs();ls.forEach(function(l){var b=l.previousElementSibling;l._flo=0;if(b)b.click();if(vis(l)){l.hidden=true;b&&b.setAttribute("aria-expanded","false")}});return ls.length>0}
+ window.flCloseAll=closeAll;
+ function inside(t){var ls=pairs();for(var i=0;i<ls.length;i++){if(ls[i].contains(t)||ls[i].previousElementSibling.contains(t))return true}return false}
+ function isBar(t){var b=t&&t.closest&&t.closest(".obar");return !!(b&&b.nextElementSibling&&b.nextElementSibling.classList.contains("olist"))}
+ var tx=0,ty=0,tm=false,eat=0;
+ document.addEventListener("touchstart",function(e){var p=e.touches[0];tx=p.clientX;ty=p.clientY;tm=false},true);
+ document.addEventListener("touchmove",function(e){var p=e.touches[0];if(Math.abs(p.clientX-tx)>10||Math.abs(p.clientY-ty)>10)tm=true},true);
+ document.addEventListener("touchend",function(e){if(tm||!pairs().length)return;var t=e.target;if(inside(t)||isBar(t))return;e.preventDefault();e.stopPropagation();eat=Date.now();closeAll()},true);
+ document.addEventListener("mousedown",function(e){if(!pairs().length)return;var t=e.target;if(inside(t)||isBar(t))return;e.preventDefault();e.stopPropagation()},true);
+ document.addEventListener("click",function(e){if(!e.isTrusted)return;if(Date.now()-eat<600){e.preventDefault();e.stopPropagation();return}if(!pairs().length)return;var t=e.target;if(inside(t)||isBar(t))return;e.preventDefault();e.stopPropagation();closeAll()},true);
+ new MutationObserver(sch).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:["hidden","class","aria-expanded"]});
+ document.addEventListener("scroll",sch,true);addEventListener("resize",sch);
+ try{var _gb=goBack;goBack=function(){if(closeAll())return true;return _gb.apply(this,arguments)}}catch(e){}
+})();
 
 /* os textos acrescentados no fim também valem para o que já está na tela */try{trAll()}catch(e){}
 </script>
