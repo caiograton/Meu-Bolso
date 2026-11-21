@@ -768,6 +768,7 @@ small .kcm{margin-left:6px}.kcmt{font-style:normal;font-weight:800;color:#3E6A7A
 @media (prefers-reduced-motion:reduce){:where(button,[role=button],.obar){transition:none!important}.tgl::after,.tgl{transition:none!important}}
 
 .olist .orow:active{background-color:rgba(123,31,42,.06)}.flghost{z-index:59!important}
+html,body,.gn-full,.gn-full .cfb{overscroll-behavior-x:none}
 </style>
 </head>
 <body>
@@ -4058,7 +4059,7 @@ function vcMSave(){var its=[].slice.call(document.querySelectorAll("#vcm .vcm-it
 /* ===== Importar extrato e regras automáticas ===== */
 var IM=null,IMBUSY=false,IMSUBQ=null,ARED=null;
 /*LEITORES:INI*/
-var LEITORES_V="extrato-0-avisos-6-aefe4030";
+var LEITORES_V="extrato-0-avisos-3-d6b7c218";
 /* Sigillum · motor de leitura de extratos.
    Lê CSV, Excel (.xlsx), OFX e PDF (AIB, Revolut, Wise e leitor genérico) dentro do aparelho.
    Não guarda nada e não acessa a rede: recebe o arquivo, devolve as linhas.
@@ -4392,7 +4393,6 @@ function auClean(s){return String(s||"").replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\
 var AUEND="(?=\\s*(?:[,·•|;!(]|\\.(?:\\s|$)|\\s(?:with|com|con|mit|avec|using|usando|via|on|em \\d|no dia|para o|z karty|karta|card|cartão|tarjeta|completed|conclu[íi]d[ao]|realizad[ao]|efetuad[ao]|done|abgeschlossen|effectué|wykonany|eseguito)\\b|$))";
 var AUPRE="(?:at|em|no|na|en|in|bei|chez|à|a|w|we|presso|da|para|to|an|de|from|von|od|di|dal)";
 function auMerchant(txt,mo){var a=txt.slice(mo.e),b=txt.slice(0,mo.i),m,ok=function(x){return x&&!auMoney(x).length&&!/balance|saldo|kontostand|solde|dispon/i.test(x)?x:""};
- if((m=b.match(/^\s*(?:Joint\s*[·•-]\s*)?(.{2,30}?)\s+withdrew\s*$/i))&&/\bfrom your joint\b/i.test(a)&&ok(m[1]))return"Conta conjunta · "+m[1];
  if((m=b.match(/^\s*(.{2,48}?)\s+(?:sent you|paid you|te enviou|enviou para voc[êe])\b/i))&&ok(m[1]))return m[1];
  if((m=a.match(new RegExp("^\\s*(?:(?:aprovad[ao]|approved|autorizad[ao]|realizad[ao]|confirmad[ao]|feita|paid|spent|transfer|transferência|pix|überweisung|virement|przelew|bonifico)\\s+)?"+AUPRE+"\\s+(.{2,48}?)"+AUEND,"i")))&&ok(m[1]))return m[1];
  if((m=b.match(new RegExp(AUPRE+"\\s+(.{2,48}?)\\s*(?:[:\\-–—]\\s*)?$","i")))&&ok(m[1])&&!/^(um|uma|a|an|the)\b/i.test(m[1]))return m[1];
@@ -4410,7 +4410,6 @@ function auWallet(app,title,text){var T=auClean(title),X=auClean(text);if(AUNO.t
 /* A "forma" de um aviso: o mesmo texto com valores, nome e números cobertos. É o que pode ir ao desenvolvedor e o que identifica um formato conhecido. */
 function auForma(title,text,x){var sk=function(s){s=auClean(s);var ms=auMoney(s);for(var i=ms.length-1;i>=0;i--)s=s.slice(0,ms[i].i)+"[valor]"+s.slice(ms[i].e);
   if(x&&x.desc&&x.desc.length>=2){var d=x.desc.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");s=s.replace(new RegExp(d,"gi"),"[nome]")}
-  s=s.replace(/^(?!\[)[^\[\]]{2,30}?(?= withdrew\b)/,"[nome]");
   return s.replace(/\d/g,"#").replace(/\s+/g," ").trim()};return{t:sk(title),x:sk(text)}}
 var AUWAL=/\[valor\] (with|com|con|mit|avec|z|met|med) [A-Za-z ]{2,20} (•+|\*+|\.{3,}) ?#{4}$/;
 function auConhecido(pkg,f){var a=AUAPPS.filter(function(x){return x.p===pkg})[0];if(a&&a.r==="wallet"&&f.t==="[nome]"&&AUWAL.test(f.x))return true;
@@ -4420,7 +4419,7 @@ function auConhecido(pkg,f){var a=AUAPPS.filter(function(x){return x.p===pkg})[0
 function auLer(pkg,title,text){var a=AUAPPS.filter(function(x){return x.p===pkg})[0],n=a?a.n:"",r=(a&&a.r==="wallet"?auWallet:auGeneric)(n,title,text);
  if(!r)return null;r.f=auForma(title,text,r);r.k=auConhecido(pkg,r.f);return r}
 var IMBUILTIN=[];
-var AUKNOWN=[{"p":"com.transferwise.android","t":"You just got paid","x":"[nome] sent you [valor]. It's in your account, ready to use.","tipo":"e","em":"2026-11-13"},{"p":"com.transferwise.android","t":"Card payment","x":"[valor] spent at [nome].","tipo":"s","em":"2026-11-14"},{"p":"com.itau","t":"Feito. Pix enviado","x":"Você enviou [valor] para [nome], CNPJ ##.###.###/####-##.","tipo":"s","em":"2026-11-17"},{"p":"com.revolut.revolut","t":"Withdrawal from joint savings","x":"[nome] withdrew [valor] from your joint savings account. Tap to view","tipo":"s","em":"2026-11-21"},{"p":"com.revolut.revolut","t":"Joint · Money withdrawn","x":"[nome] withdrew [valor] from your joint account","tipo":"s","em":"2026-11-21"},{"p":"com.revolut.revolut","t":"Transfer sent","x":"You sent [valor] to [nome]. It will arrive in seconds","tipo":"s","em":"2026-11-21"}];
+var AUKNOWN=[{"p":"com.transferwise.android","t":"You just got paid","x":"[nome] sent you [valor]. It's in your account, ready to use.","tipo":"e","em":"2026-11-13"},{"p":"com.transferwise.android","t":"Card payment","x":"[valor] spent at [nome].","tipo":"s","em":"2026-11-14"},{"p":"com.itau","t":"Feito. Pix enviado","x":"Você enviou [valor] para [nome], CNPJ ##.###.###/####-##.","tipo":"s","em":"2026-11-17"}];
 /*LEITORES:FIM*/
 /* PDF gerado pelo próprio Sigillum: confere o selo do conteúdo (HMAC do app) e a assinatura do aparelho */
 async function imMb(PG,L){var all=L.join("\n"),mark=/(Meu Bolso|Sigillum)[^\n]*\b[0-9A-F]{4}-[0-9A-F]{4}\b/.test(all),a=PG.att;
@@ -5621,7 +5620,7 @@ function fxBusy(){if(document.querySelector(".sheet-bg.open,.gmov,.kcov,.kc-sh,#
 function fxNoSwipe(t){for(var el=t;el&&el!==document.body;el=el.parentElement){if(el.id==="main")return false;var tn=el.tagName;if(tn==="INPUT"||tn==="TEXTAREA"||tn==="SELECT"||tn==="svg"||tn==="CANVAS"||el.isContentEditable)return true;
  if(el.classList&&(el.classList.contains("seg")||el.classList.contains("kc-sug")||el.classList.contains("noswipe")||el.classList.contains("olist")))return true;
  if(el.scrollWidth>el.clientWidth+4){var ox=getComputedStyle(el).overflowX;if(ox==="auto"||ox==="scroll")return true}}return false}
-function fxEase(el,tr,ms,cb){el.style.transition=RM()?"none":"transform "+ms+"ms cubic-bezier(.2,.8,.2,1)";el.style.transform=tr;var done=false,f=function(){if(done)return;done=true;el.style.transition="";if(cb)cb()};if(RM()){f();return}el.addEventListener("transitionend",f,{once:true});setTimeout(f,ms+80)}
+function fxEase(el,tr,ms,cb){el.style.transition=RM()?"none":"transform "+ms+"ms cubic-bezier(.2,.8,.2,1)";el.style.transform=tr;var done=false,f=function(){if(done)return;done=true;el.style.transition="";if(cb)cb()};if(RM()){f();return}var te=function(e){if(e.target!==el||e.propertyName!=="transform")return;el.removeEventListener("transitionend",te);f()};el.addEventListener("transitionend",te);setTimeout(function(){el.removeEventListener("transitionend",te);f()},ms+80)}/*v0273: só a transição do próprio elemento conta (o afundar do botão tocado terminava a animação antes da hora)*/
 
 /* ---- 1. arrastar para trocar de aba ---- */
 (function(){var M=Q("main"),S=null;
@@ -5725,6 +5724,21 @@ window.addEventListener("mbshort",shLaunch);
  setTimeout(function(){var nb=document.querySelector('[data-tbar="'+k+'"]');if(!nb)return;
   if(!was){var s=nb.nextElementSibling;while(s&&s.classList.contains("pftip"))s=s.nextElementSibling;if(!s||s.hasAttribute("data-tbar"))return;var h=s.offsetHeight;s.style.overflow="hidden";var a=s.animate([{height:"0px",opacity:0},{height:h+"px",opacity:1}],{duration:200,easing:"cubic-bezier(.2,.8,.2,1)"});a.onfinish=function(){s.style.overflow=""}}
   else if(gh){[].forEach.call(gh.querySelectorAll("[id]"),function(x){x.removeAttribute("id")});gh.removeAttribute("id");gh.style.overflow="hidden";gh.style.pointerEvents="none";nb.parentNode.insertBefore(gh,nb.nextSibling);var h2=gh.offsetHeight;var a2=gh.animate([{height:h2+"px",opacity:1},{height:"0px",opacity:0}],{duration:160,easing:"cubic-bezier(.4,0,.6,1)",fill:"forwards"});a2.onfinish=function(){gh.remove()}}},0)},true)})();
+
+/* ---- v0273: páginas cheias (Sobre e termos, Política, Licenças, Backup…) voltam arrastando para a direita ---- */
+(function(){var G=null;
+ function top(){var a=document.querySelectorAll(".gn-full.on");return a.length?a[a.length-1]:null}
+ document.addEventListener("touchstart",function(e){G=null;if(e.touches.length!==1||RM())return;var o=top();if(!o||!o.contains(e.target)||o._c)return;var t=e.target;
+  if(t.closest&&t.closest("input,textarea,select,.tgl,.olist,.seg,.cpk,[contenteditable],.noswipe"))return;if(document.querySelector(".olist.flo:not([hidden])"))return;
+  for(var el=t;el&&el!==o;el=el.parentElement){if(el.scrollWidth>el.clientWidth+4){var ox=getComputedStyle(el).overflowX;if(ox==="auto"||ox==="scroll")return}}
+  var p=e.touches[0];G={o:o,x:p.clientX,y:p.clientY,t:Date.now(),on:false,dx:0}},{passive:true});
+ document.addEventListener("touchmove",function(e){if(!G)return;var p=e.touches[0],dx=p.clientX-G.x,dy=p.clientY-G.y;
+  if(!G.on){if(dx<10){if(Math.abs(dy)>10||dx<-10)G=null;return}if(Math.abs(dy)*1.3>dx){G=null;return}G.on=true;G.W=G.o.offsetWidth;G.o.style.transition="none";G.o.style.boxShadow="-10px 0 24px rgba(0,0,0,.18)"}
+  G.dx=Math.max(0,dx);G.o.style.transform="translateX("+G.dx+"px)"},{passive:true});
+ function end(){if(!G||!G.on){G=null;return}var g=G;G=null;var v=g.dx/Math.max(1,Date.now()-g.t),o=g.o;
+  if(g.dx>g.W/3||(v>.5&&g.dx>40)){o._c=1;fxEase(o,"translateX("+g.W+"px)",200,function(){o.remove()})}
+  else fxEase(o,"translateX(0)",180,function(){o.style.transform="";o.style.boxShadow=""})}
+ document.addEventListener("touchend",end,{passive:true});document.addEventListener("touchcancel",end,{passive:true})})();
 
 /* os textos acrescentados no fim também valem para o que já está na tela */try{trAll()}catch(e){}
 </script>
