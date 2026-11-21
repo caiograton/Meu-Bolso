@@ -22,6 +22,8 @@ cp native/PermsPlugin.java "$PKG_DIR/PermsPlugin.java"
 cp native/NearbyPlugin.java "$PKG_DIR/NearbyPlugin.java"
 cp native/QrScanPlugin.java "$PKG_DIR/QrScanPlugin.java"
 cp native/AutoEntryPlugin.java "$PKG_DIR/AutoEntryPlugin.java"
+cp native/HapticPlugin.java "$PKG_DIR/HapticPlugin.java"
+cp native/QuickTileService.java "$PKG_DIR/QuickTileService.java"
 cp native/NotifReaderService.java "$PKG_DIR/NotifReaderService.java"
 cp native/InsetMath.java "$PKG_DIR/InsetMath.java"
 cp native/ImeTracker.java "$PKG_DIR/ImeTracker.java"
@@ -68,12 +70,16 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(NearbyPlugin.class);
         registerPlugin(QrScanPlugin.class);
         registerPlugin(AutoEntryPlugin.class);
+        registerPlugin(HapticPlugin.class);
         super.onCreate(savedInstanceState);
         if (getSharedPreferences("mb_sec", MODE_PRIVATE).getBoolean("secure", false)) {
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
         }
         if (QuickWidgetPlugin.ACTION_QUICK.equals(getIntent().getAction())) {
             QuickWidgetPlugin.pending = true;
+        }
+        if (QuickWidgetPlugin.ACTION_SHORT.equals(getIntent().getAction())) {
+            QuickWidgetPlugin.shortTo = getIntent().getStringExtra("to");
         }
 
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
@@ -146,6 +152,13 @@ public class MainActivity extends BridgeActivity {
             try {
                 getBridge().getWebView().post(() -> getBridge().getWebView().evaluateJavascript(
                         "window.dispatchEvent(new Event('mbquick'))", null));
+            } catch (Exception ignored) { }
+        }
+        if (intent != null && QuickWidgetPlugin.ACTION_SHORT.equals(intent.getAction())) {
+            QuickWidgetPlugin.shortTo = intent.getStringExtra("to");
+            try {
+                getBridge().getWebView().post(() -> getBridge().getWebView().evaluateJavascript(
+                        "window.dispatchEvent(new Event('mbshort'))", null));
             } catch (Exception ignored) { }
         }
     }
@@ -405,5 +418,85 @@ grep -q "QuickWidgetConfigActivity" "$MANIFEST" || { echo "Não foi possível re
 grep -q 'screenOrientation="portrait"' "$MANIFEST" || sed -i -E 's/(android:name="[^"]*MainActivity")/\1 android:screenOrientation="portrait"/' "$MANIFEST"
 sed -i -E 's/(android:name="com\.caiograton\.meubolso\.QuickWidgetConfigActivity")( android:exported)/\1 android:screenOrientation="portrait"\2/' "$MANIFEST"
 [ "$(grep -c 'screenOrientation="portrait"' "$MANIFEST")" -ge 2 ] || { echo "Não foi possível travar a tela em pé"; exit 1; }
+
+# Atalhos ao segurar o ícone (Novo lançamento, Lançamento rápido, Cartões, Metas)
+# e o botão "Lançamento rápido" na cortina do Android (Configurações rápidas).
+mkdir -p "$RES/xml" "$RES/drawable"
+cat > "$RES/drawable/mb_sc_add.xml" <<'XML'
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="48dp" android:height="48dp" android:viewportWidth="48" android:viewportHeight="48">
+    <path android:fillColor="#7B1F2A" android:pathData="M24,0a24,24 0,1 1,0 48a24,24 0,1 1,0 -48z"/>
+    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="3.4" android:strokeLineCap="round" android:pathData="M24,15v18M15,24h18"/>
+</vector>
+XML
+cat > "$RES/drawable/mb_sc_bolt.xml" <<'XML'
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="48dp" android:height="48dp" android:viewportWidth="48" android:viewportHeight="48">
+    <path android:fillColor="#7B1F2A" android:pathData="M24,0a24,24 0,1 1,0 48a24,24 0,1 1,0 -48z"/>
+    <path android:fillColor="#FFE9C97A" android:pathData="M26.5,12l-10,14h7l-2,10 10,-14h-7z"/>
+</vector>
+XML
+cat > "$RES/drawable/mb_sc_card.xml" <<'XML'
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="48dp" android:height="48dp" android:viewportWidth="48" android:viewportHeight="48">
+    <path android:fillColor="#7B1F2A" android:pathData="M24,0a24,24 0,1 1,0 48a24,24 0,1 1,0 -48z"/>
+    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="2.6" android:strokeLineJoin="round" android:pathData="M13,16h22a2,2 0,0 1,2 2v12a2,2 0,0 1,-2 2h-22a2,2 0,0 1,-2 -2v-12a2,2 0,0 1,2 -2zM11,21h26"/>
+</vector>
+XML
+cat > "$RES/drawable/mb_sc_goal.xml" <<'XML'
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="48dp" android:height="48dp" android:viewportWidth="48" android:viewportHeight="48">
+    <path android:fillColor="#7B1F2A" android:pathData="M24,0a24,24 0,1 1,0 48a24,24 0,1 1,0 -48z"/>
+    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="2.6" android:pathData="M24,13a11,11 0,1 1,0 22a11,11 0,1 1,0 -22zM24,19a5,5 0,1 1,0 10a5,5 0,1 1,0 -10z"/>
+</vector>
+XML
+cat > "$RES/drawable/mb_tile.xml" <<'XML'
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
+    <path android:fillColor="#FFFFFFFF" android:pathData="M13.2,2l-7,10.5h5l-1.4,9.5 8,-11.5h-5.2z"/>
+</vector>
+XML
+cat > "$RES/xml/mb_shortcuts.xml" <<'XML'
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut android:shortcutId="novo" android:enabled="true" android:icon="@drawable/mb_sc_add" android:shortcutShortLabel="@string/mb_sc_new">
+        <intent android:action="com.caiograton.meubolso.SHORT" android:targetPackage="com.caiograton.meubolso" android:targetClass="com.caiograton.meubolso.MainActivity">
+            <extra android:name="to" android:value="new" />
+        </intent>
+    </shortcut>
+    <shortcut android:shortcutId="rapido" android:enabled="true" android:icon="@drawable/mb_sc_bolt" android:shortcutShortLabel="@string/mb_sc_quick">
+        <intent android:action="com.caiograton.meubolso.QUICK" android:targetPackage="com.caiograton.meubolso" android:targetClass="com.caiograton.meubolso.MainActivity" />
+    </shortcut>
+    <shortcut android:shortcutId="cartoes" android:enabled="true" android:icon="@drawable/mb_sc_card" android:shortcutShortLabel="@string/mb_sc_cards">
+        <intent android:action="com.caiograton.meubolso.SHORT" android:targetPackage="com.caiograton.meubolso" android:targetClass="com.caiograton.meubolso.MainActivity">
+            <extra android:name="to" android:value="cards" />
+        </intent>
+    </shortcut>
+    <shortcut android:shortcutId="metas" android:enabled="true" android:icon="@drawable/mb_sc_goal" android:shortcutShortLabel="@string/mb_sc_goals">
+        <intent android:action="com.caiograton.meubolso.SHORT" android:targetPackage="com.caiograton.meubolso" android:targetClass="com.caiograton.meubolso.MainActivity">
+            <extra android:name="to" android:value="goals" />
+        </intent>
+    </shortcut>
+</shortcuts>
+XML
+mbstr() { mkdir -p "$RES/$1"; cat > "$RES/$1/mb_atalhos.xml" <<XML
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="mb_sc_new">$2</string>
+    <string name="mb_sc_quick">$3</string>
+    <string name="mb_sc_cards">$4</string>
+    <string name="mb_sc_goals">$5</string>
+</resources>
+XML
+}
+mbstr values "New entry" "Quick entry" "Cards" "Goals"
+mbstr values-pt "Novo lançamento" "Lançamento rápido" "Cartões" "Metas"
+mbstr values-es "Nuevo movimiento" "Movimiento rápido" "Tarjetas" "Metas"
+mbstr values-ja "新しい記録" "クイック記録" "カード" "目標"
+mbstr values-de "Neue Buchung" "Schnellbuchung" "Karten" "Ziele"
+mbstr values-fr "Nouvelle opération" "Saisie rapide" "Cartes" "Objectifs"
+mbstr values-pl "Nowy wpis" "Szybki wpis" "Karty" "Cele"
+mbstr values-it "Nuovo movimento" "Movimento rapido" "Carte" "Obiettivi"
+grep -q "android.app.shortcuts" "$MANIFEST" || sed -i '0,/<\/activity>/s//    <meta-data android:name="android.app.shortcuts" android:resource="@xml\/mb_shortcuts" \/>\n        <\/activity>/' "$MANIFEST"
+grep -q "android.app.shortcuts" "$MANIFEST" || { echo "Não foi possível registrar os atalhos do ícone"; exit 1; }
+if ! grep -q "QuickTileService" "$MANIFEST"; then
+  sed -i '0,/<\/application>/s//    <service android:name="com.caiograton.meubolso.QuickTileService" android:exported="true" android:label="@string\/mb_sc_quick" android:icon="@drawable\/mb_tile" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">\n            <intent-filter>\n                <action android:name="android.service.quicksettings.action.QS_TILE" \/>\n            <\/intent-filter>\n        <\/service>\n    <\/application>/' "$MANIFEST"
+fi
+grep -q "QuickTileService" "$MANIFEST" || { echo "Não foi possível registrar o botão da cortina"; exit 1; }
 
 echo "Personalizações nativas aplicadas."

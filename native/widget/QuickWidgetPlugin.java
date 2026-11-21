@@ -17,6 +17,17 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 public class QuickWidgetPlugin extends Plugin {
     public static final String ACTION_QUICK = "com.caiograton.meubolso.QUICK";
     public static volatile boolean pending = false;
+    public static final String ACTION_SHORT = "com.caiograton.meubolso.SHORT";
+    /** Destino do atalho do ícone (new, cards, goals) ainda não tratado pelo app. */
+    public static volatile String shortTo = null;
+
+    @PluginMethod
+    public void shortPending(PluginCall call) {
+        JSObject o = new JSObject();
+        o.put("to", shortTo == null ? "" : shortTo);
+        shortTo = null;
+        call.resolve(o);
+    }
 
     @PluginMethod
     public void quickPending(PluginCall call) {
