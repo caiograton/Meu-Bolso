@@ -4058,7 +4058,7 @@ function vcMSave(){var its=[].slice.call(document.querySelectorAll("#vcm .vcm-it
 /* ===== Importar extrato e regras automáticas ===== */
 var IM=null,IMBUSY=false,IMSUBQ=null,ARED=null;
 /*LEITORES:INI*/
-var LEITORES_V="extrato-0-avisos-3-d6b7c218";
+var LEITORES_V="extrato-0-avisos-6-aefe4030";
 /* Sigillum · motor de leitura de extratos.
    Lê CSV, Excel (.xlsx), OFX e PDF (AIB, Revolut, Wise e leitor genérico) dentro do aparelho.
    Não guarda nada e não acessa a rede: recebe o arquivo, devolve as linhas.
@@ -4392,6 +4392,7 @@ function auClean(s){return String(s||"").replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\
 var AUEND="(?=\\s*(?:[,·•|;!(]|\\.(?:\\s|$)|\\s(?:with|com|con|mit|avec|using|usando|via|on|em \\d|no dia|para o|z karty|karta|card|cartão|tarjeta|completed|conclu[íi]d[ao]|realizad[ao]|efetuad[ao]|done|abgeschlossen|effectué|wykonany|eseguito)\\b|$))";
 var AUPRE="(?:at|em|no|na|en|in|bei|chez|à|a|w|we|presso|da|para|to|an|de|from|von|od|di|dal)";
 function auMerchant(txt,mo){var a=txt.slice(mo.e),b=txt.slice(0,mo.i),m,ok=function(x){return x&&!auMoney(x).length&&!/balance|saldo|kontostand|solde|dispon/i.test(x)?x:""};
+ if((m=b.match(/^\s*(?:Joint\s*[·•-]\s*)?(.{2,30}?)\s+withdrew\s*$/i))&&/\bfrom your joint\b/i.test(a)&&ok(m[1]))return"Conta conjunta · "+m[1];
  if((m=b.match(/^\s*(.{2,48}?)\s+(?:sent you|paid you|te enviou|enviou para voc[êe])\b/i))&&ok(m[1]))return m[1];
  if((m=a.match(new RegExp("^\\s*(?:(?:aprovad[ao]|approved|autorizad[ao]|realizad[ao]|confirmad[ao]|feita|paid|spent|transfer|transferência|pix|überweisung|virement|przelew|bonifico)\\s+)?"+AUPRE+"\\s+(.{2,48}?)"+AUEND,"i")))&&ok(m[1]))return m[1];
  if((m=b.match(new RegExp(AUPRE+"\\s+(.{2,48}?)\\s*(?:[:\\-–—]\\s*)?$","i")))&&ok(m[1])&&!/^(um|uma|a|an|the)\b/i.test(m[1]))return m[1];
@@ -4409,6 +4410,7 @@ function auWallet(app,title,text){var T=auClean(title),X=auClean(text);if(AUNO.t
 /* A "forma" de um aviso: o mesmo texto com valores, nome e números cobertos. É o que pode ir ao desenvolvedor e o que identifica um formato conhecido. */
 function auForma(title,text,x){var sk=function(s){s=auClean(s);var ms=auMoney(s);for(var i=ms.length-1;i>=0;i--)s=s.slice(0,ms[i].i)+"[valor]"+s.slice(ms[i].e);
   if(x&&x.desc&&x.desc.length>=2){var d=x.desc.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");s=s.replace(new RegExp(d,"gi"),"[nome]")}
+  s=s.replace(/^(?!\[)[^\[\]]{2,30}?(?= withdrew\b)/,"[nome]");
   return s.replace(/\d/g,"#").replace(/\s+/g," ").trim()};return{t:sk(title),x:sk(text)}}
 var AUWAL=/\[valor\] (with|com|con|mit|avec|z|met|med) [A-Za-z ]{2,20} (•+|\*+|\.{3,}) ?#{4}$/;
 function auConhecido(pkg,f){var a=AUAPPS.filter(function(x){return x.p===pkg})[0];if(a&&a.r==="wallet"&&f.t==="[nome]"&&AUWAL.test(f.x))return true;
@@ -4418,7 +4420,7 @@ function auConhecido(pkg,f){var a=AUAPPS.filter(function(x){return x.p===pkg})[0
 function auLer(pkg,title,text){var a=AUAPPS.filter(function(x){return x.p===pkg})[0],n=a?a.n:"",r=(a&&a.r==="wallet"?auWallet:auGeneric)(n,title,text);
  if(!r)return null;r.f=auForma(title,text,r);r.k=auConhecido(pkg,r.f);return r}
 var IMBUILTIN=[];
-var AUKNOWN=[{"p":"com.transferwise.android","t":"You just got paid","x":"[nome] sent you [valor]. It's in your account, ready to use.","tipo":"e","em":"2026-11-13"},{"p":"com.transferwise.android","t":"Card payment","x":"[valor] spent at [nome].","tipo":"s","em":"2026-11-14"},{"p":"com.itau","t":"Feito. Pix enviado","x":"Você enviou [valor] para [nome], CNPJ ##.###.###/####-##.","tipo":"s","em":"2026-11-17"}];
+var AUKNOWN=[{"p":"com.transferwise.android","t":"You just got paid","x":"[nome] sent you [valor]. It's in your account, ready to use.","tipo":"e","em":"2026-11-13"},{"p":"com.transferwise.android","t":"Card payment","x":"[valor] spent at [nome].","tipo":"s","em":"2026-11-14"},{"p":"com.itau","t":"Feito. Pix enviado","x":"Você enviou [valor] para [nome], CNPJ ##.###.###/####-##.","tipo":"s","em":"2026-11-17"},{"p":"com.revolut.revolut","t":"Withdrawal from joint savings","x":"[nome] withdrew [valor] from your joint savings account. Tap to view","tipo":"s","em":"2026-11-21"},{"p":"com.revolut.revolut","t":"Joint · Money withdrawn","x":"[nome] withdrew [valor] from your joint account","tipo":"s","em":"2026-11-21"},{"p":"com.revolut.revolut","t":"Transfer sent","x":"You sent [valor] to [nome]. It will arrive in seconds","tipo":"s","em":"2026-11-21"}];
 /*LEITORES:FIM*/
 /* PDF gerado pelo próprio Sigillum: confere o selo do conteúdo (HMAC do app) e a assinatura do aparelho */
 async function imMb(PG,L){var all=L.join("\n"),mark=/(Meu Bolso|Sigillum)[^\n]*\b[0-9A-F]{4}-[0-9A-F]{4}\b/.test(all),a=PG.att;
