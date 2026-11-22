@@ -215,8 +215,11 @@ public class MainActivity extends BridgeActivity {
                     c.setAppearanceLightNavigationBars(false);
                 }
             }
-            getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.BLACK));
-            if (content != null) content.setBackgroundColor(Color.BLACK);
+            // v0276: fundo por trás do app na cor do app (antes era preto e piscava com o teclado).
+            SafeAreaPlugin.splashDone = true;
+            final int under = SafeAreaPlugin.LAST != null ? SafeAreaPlugin.LAST : Color.BLACK;
+            getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(under));
+            if (content != null) content.setBackgroundColor(under);
         });
     }
 

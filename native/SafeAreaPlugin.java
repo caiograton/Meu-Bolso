@@ -19,6 +19,10 @@ import com.getcapacitor.annotation.CapacitorPlugin;
  */
 @CapacitorPlugin(name = "SafeArea")
 public class SafeAreaPlugin extends Plugin {
+    /** Última cor de fundo do app (para o MainActivity usar depois da abertura). */
+    public static volatile Integer LAST = null;
+    public static volatile boolean splashDone = false;
+
 
     @PluginMethod
     public void getInsets(final PluginCall call) {
@@ -63,7 +67,16 @@ public class SafeAreaPlugin extends Plugin {
             @Override
             public void run() {
                 try {
-                    getBridge().getWebView().setBackgroundColor(android.graphics.Color.parseColor(c));
+                    int col = android.graphics.Color.parseColor(c);
+                    getBridge().getWebView().setBackgroundColor(col);
+                    // v0276: o fundo por trás da WebView também fica na cor do app, para que o
+                    // teclado abrindo/fechando não mostre uma faixa preta por um instante.
+                    LAST = col;
+                    if (splashDone) {
+                        android.view.View content = getActivity().findViewById(android.R.id.content);
+                        if (content != null) content.setBackgroundColor(col);
+                        getActivity().getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(col));
+                    }
                     // guardada para a próxima abertura começar na cor certa
                     android.content.SharedPreferences.Editor ed = getContext().getSharedPreferences("mb_ui", android.content.Context.MODE_PRIVATE).edit();
                     if (call.getBoolean("follow", false)) ed.remove("bg"); else ed.putString("bg", c);
