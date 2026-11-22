@@ -795,6 +795,23 @@ small .kcm{margin-left:6px}.kcmt{font-style:normal;font-weight:800;color:#3E6A7A
 .kcpl .kc2l .nm{display:flex;flex-direction:column;line-height:1.2}
 .kcpl .kc2l .nm small{font-size:calc(12px*var(--fs));color:var(--muted);font-weight:500;margin-top:2px}
 .kccr{font-weight:500;color:var(--muted);font-size:.9em}
+/* v0277 revisão leve — aba Cartões */
+#main .kc-kv{gap:0;margin:12px 0 4px}
+#main .kc-kv>div{background:none;border:0;border-radius:0;padding:2px 0}
+#main .kc-kv>div+div{padding-left:16px;border-left:1px solid var(--line)}
+#main .kc-kv>div:first-child{padding-left:0}
+#main .box:has(>.kc-row),#main .box:has(>.kc-tot){background:none!important;border:0!important;box-shadow:none!important;padding:0!important;border-radius:0}
+#main .box>.kc-row{border-top:0;position:relative}
+#main .box>.kc-row+.kc-row::before{content:"";position:absolute;left:48px;right:0;top:0;height:1px;background:var(--line)}
+#main .kc-tot{margin-top:4px}
+#main .kc-add{border:0;padding:14px;border-radius:0}
+/* v0277 revisão leve — detalhe do cartão, detalhe da compra, Seus cartões */
+.kc-kv{gap:0}
+.kc-kv>div{background:none!important;border:0!important;border-radius:0!important;padding:2px 0!important}
+.kc-kv>div+div{padding-left:14px!important;border-left:1px solid var(--line)!important}
+.gmov .box:has(>.kc-pr){background:none;border:0;box-shadow:none;padding:0!important;margin-top:8px!important;border-radius:0}
+.kc-add{border:0!important;border-radius:0!important}
+.kcov .add{border:0!important;border-radius:0!important}
 
 /*v0268 fluidez*/
 :where(button:not(.fab):not(.tgl):not(.obc):not(.kcmb):not(.sw):not(.del):not(.orow),[role=button]:not(.kc-wrap),.obar){transition:transform .07s ease-out,filter .07s ease-out}
