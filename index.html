@@ -827,6 +827,33 @@ small .kcm{margin-left:6px}.kcmt{font-style:normal;font-weight:800;color:#3E6A7A
 
 .olist .orow:active{background-color:rgba(123,31,42,.06)}.flghost{z-index:59!important}
 html,body,.gn-full,.gn-full .cfb{overscroll-behavior-x:none}
+/* v0278 revisão leve — Resumo */
+.fs-row{border-top:0!important;position:relative}
+.fs-row+.fs-row::before{content:"";position:absolute;left:48px;right:0;top:0;height:1px;background:var(--line)}
+#main>.row2{gap:0;background:var(--card);border-radius:18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+#main>.row2 .box{background:none!important;box-shadow:none!important;border:0!important;border-radius:0!important}
+#main>.row2 .box+.box{border-left:1px solid var(--line)!important;border-radius:0}
+#main:has(>.row2)>.box:not(.fs-card){background:none!important;box-shadow:none!important;border:0!important;padding-left:0!important;padding-right:0!important}
+/* v0278 revisão leve — Transações */
+#main .item{border-bottom:0;position:relative}
+#main .item+.item::before{content:"";position:absolute;left:62px;right:4px;top:0;height:1px;background:var(--line);pointer-events:none}
+#main .item .del{opacity:.55}
+/* v0278 revisão leve — Metas › Orçamento */
+#main>.box:has(#bdon),#main>.box:has(#binc),#main>.box:has(#bal_t){background:none!important;box-shadow:none!important;border:0!important;padding-left:0!important;padding-right:0!important;border-radius:0!important}
+#main>.box:has(#binc),#main>.box:has(#bal_t){margin-top:8px!important}
+.bpw input.bp{background:transparent!important;border:1px solid var(--line)!important;box-shadow:none!important;color:var(--text)}
+.bpw input.bp:focus{border-color:var(--muted)!important}
+.bnoinc{font-size:calc(14px*var(--fs));color:var(--text);margin:28px 0 -4px}
+/* v0278 revisão leve — Configurações e Avisos */
+#clist .cfgrow{background:none!important;border:0!important;border-radius:0!important;margin-top:0!important;padding:15px 4px!important;position:relative;box-shadow:none!important}
+#clist .cfgrow+.cfgrow::before{content:"";position:absolute;left:4px;right:4px;top:0;height:1px;background:var(--line);pointer-events:none}
+#clist #plcard{margin-bottom:8px}
+.cfc{background:none!important;border:0!important;padding-left:2px!important;padding-right:2px!important;box-shadow:none!important}
+.avsw{margin-top:0!important;border-radius:0!important}
+.av-it{border:0!important;border-radius:0!important;background:var(--bg)!important;padding:14px 2px!important}
+.avsw+.avsw::before{content:"";position:absolute;left:56px;right:2px;top:0;height:1px;background:var(--line);z-index:2;pointer-events:none}
+.av-it.nw small::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#C9A55A;margin-right:6px;vertical-align:1px}
+.av-it.nw:before{display:none!important}
 </style>
 </head>
 <body>
@@ -1718,7 +1745,7 @@ function bdonut(){var tot=bTotal(),off=0,arcs="",leg="";
 function budgetHtml(){
  var h='<div class="box"><div class="bh">Distribuição orçamentária</div>'+qzNoteHtml()+'<div id="bdon"></div></div>';
  h+='<div class="box" style="margin-top:12px"><div class="bh">Renda de referência mensal</div><input id="binc" type="text" inputmode="numeric" placeholder="0,00" autocomplete="off"><div class="info">Use este valor como base para planejar e distribuir suas metas financeiras. Ele não representa suas receitas reais e não cria lançamentos.</div><div class="info">Assim que você lança entradas no mês, o cálculo passa a usar o total que entrou.</div><button class="save gbtn" data-binc="1">Salvar renda</button><div class="info" id="bimsg">'+BG.imsg+'</div></div>';
- h+='<div class="box" style="margin-top:12px"><div class="bh">Controle de Orçamento</div><div class="allocr" style="margin-top:0"><span>Alocado</span><b id="bal_t"></b></div><div class="bar"><i id="bal_f"></i></div><div class="info" id="bal_m"></div>';
+ h+='<div class="box" style="margin-top:12px"><div class="bh">Controle de Orçamento</div><div class="allocr" style="margin-top:0"><span>Alocado</span><b id="bal_t"></b></div><div class="bar"><i id="bal_f"></i></div><div class="info" id="bal_m"></div><div class="bnoinc" id="bnoinc">Defina a renda de referência.</div>';
  BCATS.forEach(function(c,i){h+='<div class="brow"><div class="brh"><i class="tgdot" style="background:'+COL[c]+'"></i><b>'+esc(c)+'</b><span class="bpw"><input class="bp" id="bp_'+i+'" data-bp="'+i+'" type="text" inputmode="decimal" autocomplete="off" value="'+esc(bDraft(c))+'"><em>%</em></span></div><input type="range" class="brg" id="bs_'+i+'" data-bs="'+i+'" min="0" max="100" step="0.1" value="'+bNum(c)+'" style="--c:'+COL[c]+';--p:'+bNum(c)+'%"><div class="bra"><span id="ba_'+i+'"></span></div></div>'});
  return h+'<button class="save gbtn" id="bsave" data-bsave="1" style="margin-top:18px">Salvar metas</button><div id="bmsg" class="info"></div><button class="cancel" data-breset="1" style="margin-top:6px">Resetar valores</button></div>'}
 function metasHtml(){return msCards()+'<div class="seg"><button data-bv="orc" class="'+(BG.view==="orc"?"on":"")+'">Orçamento</button><button data-bv="eco" class="'+(BG.view==="eco"?"on":"")+'">Economia</button></div>'+(BG.view==="orc"?qzCard()+'<div style="height:12px"></div>'+budgetHtml():goalsHtml())}
@@ -1727,10 +1754,11 @@ function budUpdate(){
  if(!Q("bal_t"))return;
  var tot=bTotal(),ok=Math.abs(tot-100)<0.005,f=Q("bal_f");
  Q("bal_t").textContent=pfmt(tot)+"%";f.style.width=Math.min(100,tot)+"%";f.style.background=ok?"var(--rec)":tot>100?"var(--desp)":"var(--muted)";
- Q("bal_m").innerHTML=ok?"Distribuição fechada em 100%.":tot>100?'Excedido em <b>'+pfmt(tot-100)+'%</b> — ajuste para fechar 100%.':'Faltam <b>'+pfmt(100-tot)+'%</b> para fechar 100%.';
+ Q("bal_m").style.display=ok?"none":"";Q("bal_m").innerHTML=ok?"":tot>100?'Excedido em <b>'+pfmt(tot-100)+'%</b> — ajuste para fechar 100%.':'Faltam <b>'+pfmt(100-tot)+'%</b> para fechar 100%.';
  Q("bsave").disabled=!ok;Q("bmsg").textContent=BG.msg||(ok?"":"A distribuição precisa fechar 100% para salvar.");
  BCATS.forEach(function(c,i){var sl=Q("bs_"+i);sl.value=bNum(c);sl.style.setProperty("--p",bNum(c)+"%");
-  Q("ba_"+i).textContent=BG.income>0?"≈ "+eur.format(BG.income*bNum(c)/100)+" por mês":"Defina a renda de referência."});
+  var ba=Q("ba_"+i);ba.textContent=BG.income>0?"≈ "+eur.format(BG.income*bNum(c)/100)+" por mês":"";ba.parentNode.style.display=BG.income>0?"":"none"});
+ var ni=Q("bnoinc");if(ni)ni.style.display=BG.income>0?"none":"";
  Q("bdon").innerHTML=bdonut()}
 Q("main").addEventListener("input",function(e){var t=e.target;
  if(t.dataset.bp!==undefined){t.value=t.value.replace(/[^0-9.,]/g,"");var c=BCATS[+t.dataset.bp];BG.d[c]=t.value;BG.msg="";var r=Q("bs_"+t.dataset.bp);if(r)r.value=bNum(c);budUpdate()}
