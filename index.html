@@ -863,6 +863,22 @@ html,body,.gn-full,.gn-full .cfb{overscroll-behavior-x:none}
 .avsw+.avsw::before{content:"";position:absolute;left:56px;right:2px;top:0;height:1px;background:var(--line);z-index:2;pointer-events:none}
 .av-it.nw small::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#C9A55A;margin-right:6px;vertical-align:1px}
 .av-it.nw:before{display:none!important}
+/* v0281 revisão leve — páginas internas das Configurações e Sobre e termos */
+.cfb .cfgrow,.cfs .cfgrow{background:none!important;border:0!important;border-radius:0!important;margin-top:0!important;padding:15px 4px!important;box-shadow:none!important;position:relative}
+.cfb .cfgrow+.cfgrow::before,.cfs .cfgrow+.cfgrow::before{content:"";position:absolute;left:4px;right:4px;top:0;height:1px;background:var(--line);pointer-events:none}
+.cfb .cx2md+.cx2md::before{left:59px}
+.cfb .cx2md.hl{background:rgba(123,31,42,.07)!important;border-radius:14px!important;padding-left:10px!important;padding-right:10px!important}
+.cfb .cx2md.hl::before,.cfb .cx2md.hl+.cx2md::before{display:none}
+.tu-hd{background:none!important;border:0!important;box-shadow:none!important;padding:4px 4px 10px!important}
+.qkc{background:none!important;border:0!important;box-shadow:none!important;padding-left:2px!important;padding-right:2px!important}
+.box.gn-pts,.box.abpv{background:none!important;border:0!important;box-shadow:none!important;padding-left:2px!important;padding-right:2px!important}
+.dz .dzb{background:none!important;border:0!important;box-shadow:none!important;border-top:1px solid var(--line)!important;border-radius:0!important;padding:16px 4px!important}
+/* v0281 revisão leve — Metas › Economia */
+#main>.box.goal{background:none!important;border:0!important;box-shadow:none!important;border-radius:0!important;padding:18px 2px!important;margin-top:0!important}
+#main>.box.goal+.box.goal{border-top:1px solid var(--line)!important}
+#main>.box.goal .gbtn{background:none!important;color:var(--wine,#7B1F2A)!important;border:1.5px solid currentColor!important;box-shadow:none!important}
+:root[data-theme="dark"] #main>.box.goal .gbtn{color:#E9C97A!important}
+#main>button[data-newg]{margin-bottom:6px}
 </style>
 </head>
 <body>
@@ -5793,18 +5809,20 @@ function fxEase(el,tr,ms,cb){el.style.transition=RM()?"none":"transform "+ms+"ms
   e.preventDefault();move(dx)},{passive:false});
  document.addEventListener("touchend",function(){if(S&&S.on)end();else S=null},{passive:true});
  document.addEventListener("touchcancel",function(){if(S&&S.on){S.cancel=true;end()}},{passive:true});
- function start(dx){S.on=true;var i=FXT.indexOf(tab);S.dir=dx<0?1:-1;S.to=FXT[i+S.dir]||null;S.W=M.clientWidth;
+ function start(dx){S.on=true;var i=FXT.indexOf(tab);S.dir=dx<0?1:-1;S.to=FXT[i+S.dir]||null;S.W=M.clientWidth;S.seg=null;
+  /* v0281: em Metas, Economia ↔ Orçamento antes de trocar de aba */
+  if(tab==="metas"&&typeof BG!=="undefined"){var v=BG.view||"orc";if(S.dir<0&&v==="eco")S.seg=["orc","eco"];else if(S.dir>0&&v==="orc")S.seg=["eco","orc"];if(S.seg)S.to="metas"}
   if(!S.to){S.rub=true;return}
   var r=M.getBoundingClientRect(),pr=M.parentElement.getBoundingClientRect();var cl=document.createElement("main");cl.className="swc";while(M.firstChild)cl.appendChild(M.firstChild);/* o conteúdo atual muda de lugar (o dedo continua nele) */
   cl.style.cssText+=";position:absolute;margin:0;left:"+(r.left-pr.left)+"px;top:"+(r.top-pr.top)+"px;width:"+r.width+"px;height:"+r.height+"px;pointer-events:none;will-change:transform";
   M.parentElement.insertBefore(cl,M.nextSibling);cl.scrollTop=S.st;S.cl=cl;
-  var b=navBtn(S.to);if(b)b.click();M.style.willChange="transform";M.style.transform="translateX("+(S.dir*S.W)+"px)"}
+  if(S.seg){BG.view=S.seg[0];render();try{budgetInit()}catch(x){}}else{var b=navBtn(S.to);if(b)b.click()}M.style.willChange="transform";M.style.transform="translateX("+(S.dir*S.W)+"px)"}
  function move(dx){S.dx=dx;S.lt=Date.now();if(S.rub){M.style.transform="translateX("+dx*.25+"px)";return}
   if(S.dir>0&&dx>0)dx=0;if(S.dir<0&&dx<0)dx=0;S.cl.style.transform="translateX("+dx+"px)";M.style.transform="translateX("+(S.dir*S.W+dx)+"px)"}
  function end(){var s=S;S=null;if(s.rub){fxEase(M,"translateX(0)",220,function(){M.style.transform="";M.style.willChange=""});return}
   var v=Math.abs(s.dx)/Math.max(1,Date.now()-s.t),go=!s.cancel&&(Math.abs(s.dx)>s.W*.35||v>.55&&Math.abs(s.dx)>40);
   if(go){fxEase(s.cl,"translateX("+(-s.dir*s.W)+"px)",230);fxEase(M,"translateX(0)",230,function(){s.cl.remove();M.style.transform="";M.style.willChange="";hap("tick")})}
-  else{fxEase(s.cl,"translateX(0)",200);fxEase(M,"translateX("+(s.dir*s.W)+"px)",200,function(){var b=navBtn(s.from);if(b)b.click();M.style.transform="";M.style.willChange="";M.scrollTop=s.st;requestAnimationFrame(function(){s.cl.remove()})})}}})();
+  else{fxEase(s.cl,"translateX(0)",200);fxEase(M,"translateX("+(s.dir*s.W)+"px)",200,function(){if(s.seg){BG.view=s.seg[1];render();try{budgetInit()}catch(x){}}else{var b=navBtn(s.from);if(b)b.click()}M.style.transform="";M.style.willChange="";M.scrollTop=s.st;requestAnimationFrame(function(){s.cl.remove()})})}}})();
 
 /* ---- 2. tocar na aba atual leva ao topo ---- */
 (function(){var nv=document.querySelector("nav");if(!nv)return;nv.addEventListener("click",function(e){var b=e.target.closest("[data-t]");if(!b||b.dataset.t!==tab||FXV!=="lanc")return;if(tab==="cot"&&typeof KV!=="undefined"&&KV.v==="q")return;
