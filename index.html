@@ -663,6 +663,15 @@ nav .tt{position:relative;display:inline-block}
 .ppb.p{background:#7B1F2A;color:#fff}.ppb.s{background:rgba(127,127,127,.16);color:var(--text)}.ppb.l{background:none;color:var(--muted);text-decoration:underline;text-underline-offset:3px;font-weight:600}
 .ppta{width:100%;min-height:110px;border-radius:14px;border:1px solid var(--line);background:transparent;color:var(--text);padding:12px;font:inherit;font-size:calc(15px*var(--fs));box-sizing:border-box;resize:none}
 @media (prefers-reduced-motion:reduce){.ppdim,.ppdlg{transition:none}}
+/* v0280 revisão leve — primeira vez (apresentação) */
+#ob .obbox.obprom,#ob .obbox.obcur,#ob .obbox:has(.obdn){background:none!important;border:0!important;box-shadow:none!important;border-radius:0!important;padding-left:0!important;padding-right:0!important}
+#ob .obpr{border:0!important;position:relative}
+#ob .obpr+.obpr::before{content:"";position:absolute;left:59px;right:0;top:0;height:1px;background:var(--line);pointer-events:none}
+#ob .obopt{background:none!important;border:0!important;box-shadow:none!important;border-radius:14px;margin:0!important;position:relative}
+#ob .obopt.on{background:rgba(123,31,42,.07)!important}
+#ob .obopt+.obopt::before{content:"";position:absolute;left:72px;right:12px;top:0;height:1px;background:var(--line);pointer-events:none}
+#ob .obopt.obq+.obopt.obq::before{left:19px}
+#ob .obopt.on::before,#ob .obopt.on+.obopt::before{display:none}
 
 /*v0266 cartões*/
 .kc-wrap{position:relative;margin:4px 0 6px;cursor:pointer}
