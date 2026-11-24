@@ -6436,7 +6436,9 @@ function auWire(p,c,v){var id=p.id;
  var dh=c.querySelector("#aufxd");if(dh){var mo=new MutationObserver(function(){auMarks(p)});mo.observe(dh,{attributes:true,attributeFilter:["value"]});dh.addEventListener("change",function(){auMarks(p)})}
  c.querySelector("#aufxc").onclick=function(){p.dr=null;auSave();auPaint(id,"np",-1)};/* Cancelar: desfaz as correções e volta */
  c.querySelector("#aufxs").onclick=function(){var k=auCur();if(!(k.amt>0)){gnToast(TT("Confira o valor."));return}
-  var mh=/^(\d{1,2}):(\d{2})$/.exec(k.h);if(!/^\d{4}-\d{2}-\d{2}$/.test(k.d)||!mh||+mh[1]>23||+mh[2]>59){gnToast(TT("Confira a data e a hora."));return}
+  var dt=Q("aufxdT")?Q("aufxdT").value.trim():"",dm=/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(dt);if(!dm){gnToast(TT("Complete a data."));Q("aufxdT").focus();return}
+  var ck=new Date(+dm[3],+dm[2]-1,+dm[1]);if(ck.getDate()!==+dm[1]||ck.getMonth()!==+dm[2]-1){gnToast(TT("Data inválida."));return}/* nunca completa nem ajusta a data sozinho (03 · Regras) */
+  var mh=/^(\d{1,2}):(\d{2})$/.exec(k.h);if(!mh||+mh[1]>23||+mh[2]>59){gnToast(TT("Confira a data e a hora."));return}
   var nd=new Date(k.d+"T00:00:00");nd.setHours(+mh[1],+mh[2]);auOvOut();auNpConfirm(id,{t:k.t,amt:Math.abs(k.amt),desc:k.desc,w:nd.getTime()})};
  auMarks(p)}
 function auBack(){if(!AUV||AUV.v!=="fx")return;var p=auNp(AUV.id);if(p){p.dr=auCur();auSave()}auPaint(AUV.id,"np",-1)}
